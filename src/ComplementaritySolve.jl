@@ -1,6 +1,7 @@
 module ComplementaritySolve
 
 using CommonSolve, NonlinearSolve, SimpleNonlinearSolve
+using ComponentArrays
 import CommonSolve: init, solve, solve!
 
 include("utils.jl")

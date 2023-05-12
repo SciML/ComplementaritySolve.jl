@@ -19,7 +19,17 @@ for method in (:minmax, :smooth)
             return residual
         end
 
-        _prob = NonlinearProblem(NonlinearFunction{true}(f!), prob.u0)
+        _prob = NonlinearProblem(NonlinearFunction{true}(f!), prob.u0, prob.p)
+        sol = solve(_prob, alg.nlsolver, args...; kwargs...)
+
+        return sol
+    end
+
+    @eval function solve(prob::MixedComplementarityProblem{false}, alg::$algType, args...;
+                         kwargs...)
+        f(residual, u, θ) = $(op)(prob.f(u, θ), u, prob.lb, prob.ub)
+
+        _prob = NonlinearProblem(NonlinearFunction{false}(f!), prob.u0, prob.p)
         sol = solve(_prob, alg.nlsolver, args...; kwargs...)
 
         return sol
