@@ -9,3 +9,13 @@
 # Assumes lb = 0 and ub = +∞
 @inline minmax_transform(fx, x) = min(fx, x)
 @inline smooth_transform(fx, x) = ϕ₋(fx, x)
+
+# Make ZeroTangent and NoTangent to nothing
+__nothingify(::ZeroTangent) = nothing
+__nothingify(::NoTangent) = nothing
+__nothingify(x) = x
+
+__notangent(::Nothing) = true
+__notangent(::ZeroTangent) = true
+__notangent(::NoTangent) = true
+__notangent(::Any) = false
