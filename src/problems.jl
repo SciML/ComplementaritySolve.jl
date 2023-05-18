@@ -7,6 +7,15 @@ struct LinearComplementarityProblem{MType, qType, uType} <:
     u0::uType
 end
 
+struct MixedLinearComplementarityProblem{MType, qType, uType, LB, UB} <:
+       AbstractComplementarityProblem{false}
+    M::MType
+    q::qType
+    u0::uType
+    lb::LB
+    ub::UB
+end
+
 struct NonlinearComplementarityProblem{iip, F <: Function, uType, pType} <:
        AbstractComplementarityProblem{iip}
     f::F

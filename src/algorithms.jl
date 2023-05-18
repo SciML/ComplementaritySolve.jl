@@ -15,18 +15,23 @@ function solve(prob::LinearComplementarityProblem, alg::BokhovenIterativeLCPAlgo
 
     θ = vcat(vec(B), b)
 
-    function objective(u, θ)
-        return view(θ, (length(B) + 1):length(θ)) .+
-               reshape(view(θ, 1:length(B)), size(B)) * abs.(u) .- u
+    _get_B(θ) = reshape(view(θ, 1:length(B)), size(B))
+    _get_b(θ) = view(θ, (length(B) + 1):length(θ))
+
+    function objective!(residual, u, θ)
+        mul!(residual, _get_B(θ), abs.(u))
+        residual .+= _get_b(θ) .- u
+        return residual
     end
 
-    _prob = NonlinearProblem(NonlinearFunction{false}(objective), prob.u0, θ)
+    _prob = NonlinearProblem(NonlinearFunction{true}(objective!), prob.u0, θ)
     sol = solve(_prob, alg.nlsolver, args...; kwargs...)
 
-    w = abs.(sol.u) .- sol.u
-    z = sol.u .+ abs.(sol.u)
+    z = abs.(sol.u)
+    b .= z .- sol.u # |u| - u # This is `w`. Just reusing `b` to save memory
+    z .+= sol.u     # |u| + u
 
-    return LinearComplementaritySolution(z, w, sol.resid, prob, alg)
+    return LinearComplementaritySolution(z, b, sol.resid, prob, alg)
 end
 
 # Reformulate Problems as a Nonlinear Problem
@@ -67,20 +72,26 @@ for method in (:minmax, :smooth)
 
     @eval function solve(prob::LinearComplementarityProblem, alg::$algType, args...;
                          kwargs...)
-        function f(u, θ)
+        function f!(out, u, θ)
             M = reshape(view(θ, 1:length(prob.M)), size(prob.M))
             q = view(θ, (length(prob.M) + 1):length(θ))
-            return M * u .+ q
+            out .= q
+            mul!(out, M, u, true, true)
+            return out
         end
 
-        residual(u, θ) = $(op).(f(u, θ), u)
+        function objective!(residual, u, θ)
+            f!(residual, u, θ)
+            residual .= $(op).(residual, u)
+            return residual
+        end
 
         θ = vcat(vec(prob.M), prob.q)
-        _prob = NonlinearProblem(NonlinearFunction{false}(residual), prob.u0, θ)
+        _prob = NonlinearProblem(NonlinearFunction{true}(objective!), prob.u0, θ)
         sol = solve(_prob, alg.nlsolver, args...; kwargs...)
 
         z = sol.u
-        w = f(z, θ)
+        w = f!(copy(z), z, θ)
 
         return LinearComplementaritySolution(z, w, sol.resid, prob, alg)
     end

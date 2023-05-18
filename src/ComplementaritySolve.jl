@@ -17,8 +17,8 @@ include("algorithms.jl")
 include("solutions.jl")
 include("adjoint.jl")
 
-export LinearComplementarityProblem, NonlinearComplementarityProblem,
-       MixedComplementarityProblem
+export LinearComplementarityProblem, MixedLinearComplementarityProblem,
+       NonlinearComplementarityProblem, MixedComplementarityProblem
 export BokhovenIterativeLCPAlgorithm, NonlinearReformulation
 export LinearComplementarityAdjoint
 export solve
