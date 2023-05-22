@@ -18,3 +18,20 @@ struct LinearComplementaritySolution{zType, wType, residType,
     prob::P
     alg::A
 end
+
+struct MixedComplementaritySolution{uType, residType,
+                                    P <: AbstractComplementarityProblem,
+                                    A <: AbstractComplementarityAlgorithm} <:
+       AbstractComplementaritySolution
+    u::uType
+    resid::residType
+    prob::P
+    alg::A
+end
+
+function Base.show(io::IO, sol::MixedComplementaritySolution)
+    println(io, "Mixed Complementarity Solution")
+    println(io, "    residual: ", sol.resid)
+    println(io, "    u: ", sol.u)
+    return
+end

@@ -1,7 +1,9 @@
 module ComplementaritySolve
 
 using ArrayInterfaceCore, CommonSolve, NonlinearSolve, SimpleNonlinearSolve, LinearSolve,
-      FillArrays, ComponentArrays, LinearAlgebra, SparseArrays, ChainRulesCore
+      FillArrays, ComponentArrays, LinearAlgebra, SparseArrays, ChainRulesCore,
+      SciMLOperators
+using Zygote
 import CommonSolve: init, solve, solve!
 import ChainRulesCore as CRC
 
@@ -21,6 +23,7 @@ export LinearComplementarityProblem, MixedLinearComplementarityProblem,
        NonlinearComplementarityProblem, MixedComplementarityProblem
 export BokhovenIterativeLCPAlgorithm, NonlinearReformulation
 export LinearComplementarityAdjoint
+export LinearComplementaritySolution, MixedComplementaritySolution
 export solve
 
 end

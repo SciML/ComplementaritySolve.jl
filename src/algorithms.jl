@@ -25,7 +25,7 @@ function solve(prob::LinearComplementarityProblem, alg::BokhovenIterativeLCPAlgo
     end
 
     _prob = NonlinearProblem(NonlinearFunction{true}(objective!), prob.u0, θ)
-    sol = solve(_prob, alg.nlsolver, args...; kwargs...)
+    sol = solve(_prob, alg.nlsolver; kwargs...)
 
     z = abs.(sol.u)
     b .= z .- sol.u # |u| - u # This is `w`. Just reusing `b` to save memory
@@ -46,8 +46,7 @@ end
 for method in (:minmax, :smooth)
     algType = NonlinearReformulation{method}
     op = Symbol("$(method)_transform")
-    @eval function solve(prob::MixedComplementarityProblem{true}, alg::$algType, args...;
-                         kwargs...)
+    @eval function solve(prob::MixedComplementarityProblem{true}, alg::$algType; kwargs...)
         function f!(residual, u, θ)
             prob.f(residual, u, θ)
             residual .= $(op).(residual, u, prob.lb, prob.ub)
@@ -55,23 +54,21 @@ for method in (:minmax, :smooth)
         end
 
         _prob = NonlinearProblem(NonlinearFunction{true}(f!), prob.u0, prob.p)
-        sol = solve(_prob, alg.nlsolver, args...; kwargs...)
+        sol = solve(_prob, alg.nlsolver; kwargs...)
 
-        return sol
+        return MixedComplementaritySolution(sol.u, sol.resid, prob, alg)
     end
 
-    @eval function solve(prob::MixedComplementarityProblem{false}, alg::$algType, args...;
-                         kwargs...)
+    @eval function solve(prob::MixedComplementarityProblem{false}, alg::$algType; kwargs...)
         f(u, θ) = $(op).(prob.f(u, θ), u, prob.lb, prob.ub)
 
         _prob = NonlinearProblem(NonlinearFunction{false}(f), prob.u0, prob.p)
-        sol = solve(_prob, alg.nlsolver, args...; kwargs...)
+        sol = solve(_prob, alg.nlsolver; kwargs...)
 
-        return sol
+        return MixedComplementaritySolution(sol.u, sol.resid, prob, alg)
     end
 
-    @eval function solve(prob::LinearComplementarityProblem, alg::$algType, args...;
-                         kwargs...)
+    @eval function solve(prob::LinearComplementarityProblem, alg::$algType; kwargs...)
         function f!(out, u, θ)
             M = reshape(view(θ, 1:length(prob.M)), size(prob.M))
             q = view(θ, (length(prob.M) + 1):length(θ))
@@ -88,7 +85,7 @@ for method in (:minmax, :smooth)
 
         θ = vcat(vec(prob.M), prob.q)
         _prob = NonlinearProblem(NonlinearFunction{true}(objective!), prob.u0, θ)
-        sol = solve(_prob, alg.nlsolver, args...; kwargs...)
+        sol = solve(_prob, alg.nlsolver; kwargs...)
 
         z = sol.u
         w = f!(copy(z), z, θ)
