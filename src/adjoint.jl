@@ -70,8 +70,14 @@ end
 
     A₁ = ∂ϕ₊∂u₊ * ∂ϕ₋∂u₋
     A₂ = ∂ϕ₊∂v₊ * ∂ϕ₋∂u₋ + ∂ϕ₋∂v₋
-    λ = solve(LinearProblem(fixed_vecjac_operator(f, u, p, A₁, A₂), __unfillarray(∂u)),
-              alg.linsolve).u
+    if length(u) ≤ 50
+        # Construct the Full Matrix
+        A = only(Zygote.jacobian(x -> f(x, p), u))' * A₁ .+ A₂
+    else
+        # Use Matrix Free Methods
+        A = fixed_vecjac_operator(f, u, p, A₁, A₂)
+    end
+    λ = solve(LinearProblem(A, __unfillarray(∂u)), alg.linsolve).u
 
     _, pb_f = Zygote.pullback(p -> f(u, p), p)
     vec(∂p) .= -vec(only(pb_f((A₁ * λ)')))

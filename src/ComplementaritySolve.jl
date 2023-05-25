@@ -1,14 +1,14 @@
 module ComplementaritySolve
 
-using ArrayInterfaceCore, CommonSolve, NonlinearSolve, SimpleNonlinearSolve, LinearSolve,
-      FillArrays, ComponentArrays, LinearAlgebra, SparseArrays, ChainRulesCore,
-      SciMLOperators
-using Zygote
+using ArrayInterfaceCore, ChainRulesCore, CommonSolve, ComponentArrays, FillArrays,
+      LinearAlgebra, LinearSolve, NonlinearSolve, SimpleNonlinearSolve, SciMLBase,
+      SciMLOperators, SparseArrays, Zygote
 import CommonSolve: init, solve, solve!
 import ChainRulesCore as CRC
 
 const ∂0 = ZeroTangent()
 const ∂∅ = NoTangent()
+const ∅p = SciMLBase.NullParameters()
 
 # Needs upstreaming
 ArrayInterfaceCore.can_setindex(::Type{<:FillArrays.AbstractFill}) = false

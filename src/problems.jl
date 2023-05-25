@@ -7,6 +7,8 @@ struct LinearComplementarityProblem{MType, qType, uType} <:
     u0::uType
 end
 
+const LCP = LinearComplementarityProblem
+
 struct MixedLinearComplementarityProblem{MType, qType, uType, LB, UB} <:
        AbstractComplementarityProblem{false}
     M::MType
@@ -16,6 +18,20 @@ struct MixedLinearComplementarityProblem{MType, qType, uType, LB, UB} <:
     ub::UB
 end
 
+const MLCP = MixedLinearComplementarityProblem
+
+function MLCP(prob::LCP)
+    lb = zero(prob.u0)
+    ub = similar(prob.u0)
+    fill!(ub, eltype(prob.u0)(Inf))
+    return MLCP{false}(prob.M, prob.q, prob.u0, lb, ub)
+end
+
+function MLCP{iip}(M::MType, q::qType, u0::uType, lb::LB,
+                   ub::UB) where {iip, MType, qType, uType, LB, UB}
+    return MLCP{iip, MType, qType, uType, LB, UB}(M, q, u0, lb, ub)
+end
+
 struct NonlinearComplementarityProblem{iip, F <: Function, uType, pType} <:
        AbstractComplementarityProblem{iip}
     f::F
@@ -23,9 +39,14 @@ struct NonlinearComplementarityProblem{iip, F <: Function, uType, pType} <:
     p::pType
 end
 
-function NonlinearComplementarityProblem(prob::LinearComplementarityProblem)
-    p = ComponentArray((; M, q))
-    return NonlinearComplementarityProblem{false}((x, θ) -> θ.M * x + θ.q, prob.u0, p)
+const NCP = NonlinearComplementarityProblem
+
+function NCP(prob::LCP)
+    return NCP{false}((x, θ) -> θ.M * x + θ.q, prob.u0, ComponentArray((; prob.M, prob.q)))
+end
+
+function NCP{iip}(f::F, u0::uType, p::pType=∅p) where {iip, F, uType, pType}
+    return NCP{iip, F, uType, pType}(f, u0, p)
 end
 
 struct MixedComplementarityProblem{iip, F <: Function, uType, LB, UB, pType} <:
@@ -37,8 +58,23 @@ struct MixedComplementarityProblem{iip, F <: Function, uType, LB, UB, pType} <:
     p::pType
 end
 
-function MixedComplementarityProblem{iip}(f::F, u0::uType, lb::LB, ub::UB,
-                                          p::pType=NullParameters()) where {iip, F, uType,
-                                                                            LB, UB, pType}
-    return MixedComplementarityProblem{iip, F, uType, LB, UB, pType}(f, u0, lb, ub, p)
+const MCP = MixedComplementarityProblem
+
+MCP(prob::LCP) = MCP(NCP(prob))
+
+function MCP(prob::MLCP{iip}) where {iip}
+    p = ComponentArray((; prob.M, prob.q))
+    return MCP{iip}((x, θ) -> θ.M * x + θ.q, prob.u0, prob.lb, prob.ub, p)
+end
+
+function MCP(prob::NCP{iip}) where {iip}
+    lb = zero(prob.u0)
+    ub = similar(prob.u0)
+    fill!(ub, eltype(prob.u0)(Inf))
+    return MCP{iip}(prob.f, prob.u0, lb, ub, prob.p)
+end
+
+function MCP{iip}(f::F, u0::uType, lb::LB, ub::UB,
+                  p::pType=∅p) where {iip, F, uType, LB, UB, pType}
+    return MCP{iip, F, uType, LB, UB, pType}(f, u0, lb, ub, p)
 end
