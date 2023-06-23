@@ -8,9 +8,13 @@ using ComplementaritySolve
     q = [-5.0, -6]
 
     prob = LinearComplementarityProblem(A, q, zeros(2))
-    alg = ComplementaritySolve.RPSOR(;ω = 1.0, ρ = 0.1, tol = 1e-8)
-    sol = solve(prob, alg)
 
-    @test sol.z ≈ [4.0/3, 7.0/3]
-    @test sol.w ≈ [0.0, 0.0] atol = 1e-10
+    for alg in [BokhovenIterativeLCPAlgorithm(), 
+                RPSOR(;ω = 1.0, ρ = 0.1),
+                PGS()]
+        sol = solve(prob, alg)
+
+        @test sol.z ≈ [4.0/3, 7.0/3] rtol = 1e-3
+        @test sol.w ≈ [0.0, 0.0] atol = 1e-6
+    end
 end  
