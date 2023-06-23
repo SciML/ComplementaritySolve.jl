@@ -5,8 +5,15 @@ end
 
 _Jq(z) = Diagonal((x -> isapprox(x, 0; rtol=1e-5, atol=1e-5) ? x : one(x)).(z))
 
-@views function ∇linear_complementarity_problem!(alg::LinearComplementarityAdjoint, ∂z, z,
-                                                 ∂w, w, ∂M, M, ∂q, q)
+@views function ∇linear_complementarity_problem!(alg::LinearComplementarityAdjoint,
+    ∂z,
+    z,
+    ∂w,
+    w,
+    ∂M,
+    M,
+    ∂q,
+    q)
     ∂w === nothing && ∂z === nothing && return
 
     if ∂w !== nothing
@@ -28,7 +35,9 @@ _Jq(z) = Diagonal((x -> isapprox(x, 0; rtol=1e-5, atol=1e-5) ? x : one(x)).(z))
 
     A = ∂ϕ₋∂u₋ * M + ∂ϕ₋∂v₋
     B = -hcat(reshape(reshape(z, 1, 1, :) .* repeat(∂ϕ₋∂u₋; outer=(1, 1, length(z))),
-                      length(z), length(M)), _Jq(z))
+            length(z),
+            length(M)),
+        _Jq(z))
 
     λ = solve(LinearProblem(A, ∂z), alg.linsolve).u
     ∂Mq = λ' * B
@@ -39,14 +48,24 @@ _Jq(z) = Diagonal((x -> isapprox(x, 0; rtol=1e-5, atol=1e-5) ? x : one(x)).(z))
     return
 end
 
-function CRC.rrule(::typeof(solve), prob::LinearComplementarityProblem, alg;
-                   sensealg=LinearComplementarityAdjoint(), kwargs...)
+function CRC.rrule(::typeof(solve),
+    prob::LinearComplementarityProblem,
+    alg;
+    sensealg=LinearComplementarityAdjoint(),
+    kwargs...)
     sol = solve(prob, alg; kwargs...)
 
     function ∇lcpsolve(Δ)
         ∂M, ∂q = zero(prob.M), zero(prob.q)
-        ∇linear_complementarity_problem!(sensealg, __nothingify(Δ.z), sol.z,
-                                         __nothingify(Δ.w), sol.w, ∂M, prob.M, ∂q, prob.q)
+        ∇linear_complementarity_problem!(sensealg,
+            __nothingify(Δ.z),
+            sol.z,
+            __nothingify(Δ.w),
+            sol.w,
+            ∂M,
+            prob.M,
+            ∂q,
+            prob.q)
         ∂prob = (; M=∂M, q=∂q, u0=∂∅)
         return ∂∅, ∂prob, ∂∅
     end
@@ -60,8 +79,14 @@ end
 end
 
 @views function ∇mixed_complementarity_problem!(cfg::RuleConfig{>:HasReverseMode},
-                                                alg::MixedComplementarityAdjoint, ∂u, u, ∂p,
-                                                p, f, lb, ub)
+    alg::MixedComplementarityAdjoint,
+    ∂u,
+    u,
+    ∂p,
+    p,
+    f,
+    lb,
+    ub)
     ∂u === nothing && return
 
     fᵤ = f(u, p)
@@ -85,15 +110,25 @@ end
     return
 end
 
-function CRC.rrule(cfg::RuleConfig{>:HasReverseMode}, ::typeof(solve),
-                   prob::MixedComplementarityProblem{false}, alg;
-                   sensealg=MixedComplementarityAdjoint(), kwargs...)
+function CRC.rrule(cfg::RuleConfig{>:HasReverseMode},
+    ::typeof(solve),
+    prob::MixedComplementarityProblem{false},
+    alg;
+    sensealg=MixedComplementarityAdjoint(),
+    kwargs...)
     sol = solve(prob, alg; kwargs...)
 
     function ∇mcpsolve(Δ)
         ∂p = zero(prob.p)
-        ∇mixed_complementarity_problem!(cfg, sensealg, __nothingify(Δ.u), sol.u, ∂p, prob.p,
-                                        prob.f, prob.lb, prob.ub)
+        ∇mixed_complementarity_problem!(cfg,
+            sensealg,
+            __nothingify(Δ.u),
+            sol.u,
+            ∂p,
+            prob.p,
+            prob.f,
+            prob.lb,
+            prob.ub)
         ∂prob = (; p=∂p, u0=∂∅, lb=∂∅, ub=∂∅, f=∂∅)
         return ∂∅, ∂prob, ∂∅
     end

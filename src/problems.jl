@@ -27,8 +27,11 @@ function MLCP(prob::LCP)
     return MLCP{false}(prob.M, prob.q, prob.u0, lb, ub)
 end
 
-function MLCP{iip}(M::MType, q::qType, u0::uType, lb::LB,
-                   ub::UB) where {iip, MType, qType, uType, LB, UB}
+function MLCP{iip}(M::MType,
+    q::qType,
+    u0::uType,
+    lb::LB,
+    ub::UB) where {iip, MType, qType, uType, LB, UB}
     return MLCP{iip, MType, qType, uType, LB, UB}(M, q, u0, lb, ub)
 end
 
@@ -74,7 +77,10 @@ function MCP(prob::NCP{iip}) where {iip}
     return MCP{iip}(prob.f, prob.u0, lb, ub, prob.p)
 end
 
-function MCP{iip}(f::F, u0::uType, lb::LB, ub::UB,
-                  p::pType=∅p) where {iip, F, uType, LB, UB, pType}
+function MCP{iip}(f::F,
+    u0::uType,
+    lb::LB,
+    ub::UB,
+    p::pType=∅p) where {iip, F, uType, LB, UB, pType}
     return MCP{iip, F, uType, LB, UB, pType}(f, u0, lb, ub, p)
 end
