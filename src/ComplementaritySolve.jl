@@ -21,7 +21,8 @@ include("adjoint.jl")
 
 export LinearComplementarityProblem, MixedLinearComplementarityProblem,
        NonlinearComplementarityProblem, MixedComplementarityProblem
-export BokhovenIterativeLCPAlgorithm, NonlinearReformulation
+export BokhovenIterativeLCPAlgorithm, NonlinearReformulation,
+       RPSOR, PGS, PSOR, RPGS
 export LinearComplementarityAdjoint
 export LinearComplementaritySolution, MixedComplementaritySolution
 export solve
