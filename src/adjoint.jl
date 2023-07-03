@@ -7,54 +7,45 @@ end
 
 _Jq(z) = __diagonal((x -> isapprox(x, 0; rtol=1e-5, atol=1e-5) ? x : one(x)).(z))
 
-@views function ∇linear_complementarity_problem!(alg::LinearComplementarityAdjoint,
+__get_lcp_dimensions(z::AbstractVector) = (length(z), -1), length(z)^2
+__get_lcp_dimensions(z::AbstractMatrix) = (size(z, 1), size(z, 2)), size(z, 1)^2
+
+function __lcp_gradient_computation(z::AbstractVector,
     ∂z,
-    z::AbstractVector,
-    ∂w,
-    w::AbstractVector,
-    ∂M,
+    ∂ϕ₋∂u₋,
     M,
-    ∂q,
-    q)
-    ∂w === nothing && ∂z === nothing && return
-
-    if ∂w !== nothing
-        sum!(∂q, ∂w)
-        mul!(∂M, ∂w, z')
-        if ∂z === nothing
-            ∂z = M' * ∂w
-        elseif ArrayInterfaceCore.can_setindex(∂z)
-            ∂z .+= M' * ∂w
-        else
-            ∂z = ∂z .+ M' * ∂w
-        end
-    end
-
-    L = length(z)
-    Lₘ = L^2
-
-    u₋, v₋ = w, z
-    den = @. inv(√(u₋^2 + v₋^2))
-    ∂ϕ₋∂u₋ = Diagonal(@. 1 - u₋ * den)
-    ∂ϕ₋∂v₋ = Diagonal(@. 1 - v₋ * den)
-
+    ∂ϕ₋∂v₋,
+    L,
+    Lₘ,
+    _,
+    linsolve)
     A = ∂ϕ₋∂u₋ * M + ∂ϕ₋∂v₋
     B = -hcat(reshape(reshape(z, 1, 1, L) .* reshape(∂ϕ₋∂u₋, L, L, 1), L, Lₘ), _Jq(z))
+    λ = solve(LinearProblem(A, __unfillarray(∂z)), linsolve).u
+    return vec(λ' * B)
+end
 
-    λ = solve(LinearProblem(A, ∂z), alg.linsolve).u
-    ∂Mq = λ' * B
-
-    vec(∂M) .+= vec(∂Mq[1, 1:Lₘ])
-    vec(∂q) .+= vec(∂Mq[1, (Lₘ + 1):end])
-
-    return
+function __lcp_gradient_computation(z::AbstractMatrix,
+    ∂z,
+    ∂ϕ₋∂u₋,
+    M,
+    ∂ϕ₋∂v₋,
+    L,
+    Lₘ,
+    N,
+    linsolve)
+    A = __make_block_diagonal_matrix(∂ϕ₋∂u₋ ⊠ reshape(M, L, L, 1) .+ ∂ϕ₋∂v₋)
+    B = -hcat(reshape(reshape(z, 1, 1, L, N) .* reshape(∂ϕ₋∂u₋, L, L, 1, N), L, Lₘ, N),
+        _Jq(z))
+    λ = reshape(solve(LinearProblem(A, __unfillarray(vec(∂z))), linsolve).u, L, N)
+    return vec(sum(reshape(λ, 1, L, N) ⊠ B; dims=3))
 end
 
 @views function ∇linear_complementarity_problem!(alg::LinearComplementarityAdjoint,
     ∂z,
-    z::AbstractArray{<:Number, 2},
+    z,
     ∂w,
-    w::AbstractArray{<:Number, 2},
+    w,
     ∂M,
     M,
     ∂q,
@@ -73,21 +64,14 @@ end
         end
     end
 
-    L, N = size(z)
-    Lₘ = L^2
+    (L, N), Lₘ = __get_lcp_dimensions(z)
 
     u₋, v₋ = w, z
     den = @. inv(√(u₋^2 + v₋^2))
     ∂ϕ₋∂u₋ = __diagonal(@. 1 - u₋ * den)
     ∂ϕ₋∂v₋ = __diagonal(@. 1 - v₋ * den)
 
-    A = __make_block_diagonal_matrix(∂ϕ₋∂u₋ ⊠ reshape(M, L, L, 1) .+ ∂ϕ₋∂v₋)
-
-    B = -hcat(reshape(reshape(z, 1, 1, L, N) .* reshape(∂ϕ₋∂u₋, L, L, 1, N), L, Lₘ, N),
-        _Jq(z))
-
-    λ = reshape(solve(LinearProblem(A, vec(∂z)), alg.linsolve).u, L, N)
-    ∂Mq = dropdims(sum(reshape(λ, 1, L, N) ⊠ B; dims=3); dims=(1, 3))
+    ∂Mq = __lcp_gradient_computation(z, ∂z, ∂ϕ₋∂u₋, M, ∂ϕ₋∂v₋, L, Lₘ, N, alg.linsolve)
 
     vec(∂M) .+= vec(∂Mq[1:Lₘ])
     vec(∂q) .+= vec(∂Mq[(Lₘ + 1):end])

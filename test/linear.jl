@@ -55,6 +55,24 @@ using ComplementaritySolve,
                 @test ∂q !== nothing && !iszero(∂q)
                 @test ∂A≈∂θ_fd.A atol=5e-2 rtol=5e-2
                 @test ∂q≈∂θ_fd.q atol=5e-2 rtol=5e-2
+
+                ∂A, ∂q = Zygote.gradient(A, q) do A, q
+                    prob = LinearComplementarityProblem(A, q, u0)
+                    sol = solve(prob, solver; sensealg=LinearComplementarityAdjoint())
+                    return sum(sol.z)  # Test that we can handle FillArrays
+                end
+
+                θ = ComponentArray((; A, q))
+                ∂θ_fd = ForwardDiff.gradient(θ) do θ
+                    prob = LinearComplementarityProblem(θ.A, θ.q, u0)
+                    sol = solve(prob, solver)
+                    return sum(sol.z)
+                end
+
+                @test ∂A !== nothing && !iszero(∂A)
+                @test ∂q !== nothing && !iszero(∂q)
+                @test ∂A≈∂θ_fd.A atol=5e-2 rtol=5e-2
+                @test ∂q≈∂θ_fd.q atol=5e-2 rtol=5e-2
             end
         end
     end
