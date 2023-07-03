@@ -6,6 +6,8 @@ abstract type AbstractComplementarityAlgorithm end
     nlsolver::S = NewtonRaphson()
 end
 
+@truncate_stacktrace BokhovenIterativeLCPAlgorithm
+
 ## NOTE: It is a steady state problem so we could in-principle use an ODE Solver
 function solve(prob::LinearComplementarityProblem,
     alg::BokhovenIterativeLCPAlgorithm,
@@ -40,6 +42,8 @@ end
 struct NonlinearReformulation{method, S} <: AbstractComplementarityAlgorithm
     nlsolver::S
 end
+
+@truncate_stacktrace NonlinearReformulation 1
 
 function NonlinearReformulation(method::Symbol=:smooth, nlsolver=NewtonRaphson())
     return NonlinearReformulation{method, typeof(nlsolver)}(nlsolver)
