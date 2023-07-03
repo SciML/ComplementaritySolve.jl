@@ -8,6 +8,7 @@ using ArrayInterfaceCore,
     LinearAlgebra,
     LinearSolve,
     NonlinearSolve,
+    NNlib,
     SimpleNonlinearSolve,
     SciMLBase,
     SciMLOperators,
@@ -34,8 +35,9 @@ export LinearComplementarityProblem,
     MixedLinearComplementarityProblem,
     NonlinearComplementarityProblem,
     MixedComplementarityProblem
+export LCP, MLCP, NCP, MCP  # Short aliases
 export BokhovenIterativeLCPAlgorithm, NonlinearReformulation, RPSOR, PGS, PSOR, RPGS
-export LinearComplementarityAdjoint
+export LinearComplementarityAdjoint, MixedComplementarityAdjoint
 export LinearComplementaritySolution, MixedComplementaritySolution
 export solve
 

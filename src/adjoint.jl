@@ -3,13 +3,15 @@
     linsolve::L = nothing
 end
 
-_Jq(z) = Diagonal((x -> isapprox(x, 0; rtol=1e-5, atol=1e-5) ? x : one(x)).(z))
+@truncate_stacktrace LinearComplementarityAdjoint
+
+_Jq(z) = __diagonal((x -> isapprox(x, 0; rtol=1e-5, atol=1e-5) ? x : one(x)).(z))
 
 @views function ∇linear_complementarity_problem!(alg::LinearComplementarityAdjoint,
     ∂z,
-    z,
+    z::AbstractVector,
     ∂w,
-    w,
+    w::AbstractVector,
     ∂M,
     M,
     ∂q,
@@ -28,22 +30,67 @@ _Jq(z) = Diagonal((x -> isapprox(x, 0; rtol=1e-5, atol=1e-5) ? x : one(x)).(z))
         end
     end
 
+    L = length(z)
+    Lₘ = L^2
+
     u₋, v₋ = w, z
     den = @. inv(√(u₋^2 + v₋^2))
     ∂ϕ₋∂u₋ = Diagonal(@. 1 - u₋ * den)
     ∂ϕ₋∂v₋ = Diagonal(@. 1 - v₋ * den)
 
     A = ∂ϕ₋∂u₋ * M + ∂ϕ₋∂v₋
-    B = -hcat(reshape(reshape(z, 1, 1, :) .* repeat(∂ϕ₋∂u₋; outer=(1, 1, length(z))),
-            length(z),
-            length(M)),
-        _Jq(z))
+    B = -hcat(reshape(reshape(z, 1, 1, L) .* reshape(∂ϕ₋∂u₋, L, L, 1), L, Lₘ), _Jq(z))
 
     λ = solve(LinearProblem(A, ∂z), alg.linsolve).u
     ∂Mq = λ' * B
 
-    vec(∂M) .+= vec(∂Mq[1, 1:length(M)])
-    vec(∂q) .+= vec(∂Mq[1, (length(M) + 1):end])
+    vec(∂M) .+= vec(∂Mq[1, 1:Lₘ])
+    vec(∂q) .+= vec(∂Mq[1, (Lₘ + 1):end])
+
+    return
+end
+
+@views function ∇linear_complementarity_problem!(alg::LinearComplementarityAdjoint,
+    ∂z,
+    z::AbstractArray{<:Number, 2},
+    ∂w,
+    w::AbstractArray{<:Number, 2},
+    ∂M,
+    M,
+    ∂q,
+    q)
+    ∂w === nothing && ∂z === nothing && return
+
+    if ∂w !== nothing
+        sum!(∂q, ∂w)
+        mul!(∂M, ∂w, z')
+        if ∂z === nothing
+            ∂z = M' * ∂w
+        elseif ArrayInterfaceCore.can_setindex(∂z)
+            ∂z .+= M' * ∂w
+        else
+            ∂z = ∂z .+ M' * ∂w
+        end
+    end
+
+    L, N = size(z)
+    Lₘ = L^2
+
+    u₋, v₋ = w, z
+    den = @. inv(√(u₋^2 + v₋^2))
+    ∂ϕ₋∂u₋ = __diagonal(@. 1 - u₋ * den)
+    ∂ϕ₋∂v₋ = __diagonal(@. 1 - v₋ * den)
+
+    A = __make_banded_diagonal_matrix(∂ϕ₋∂u₋ ⊠ reshape(M, L, L, 1) .+ ∂ϕ₋∂v₋)
+
+    B = -hcat(reshape(reshape(z, 1, 1, L, N) .* reshape(∂ϕ₋∂u₋, L, L, 1, N), L, Lₘ, N),
+        _Jq(z))
+
+    λ = reshape(solve(LinearProblem(A, vec(∂z)), alg.linsolve).u, L, N)
+    ∂Mq = dropdims(sum(reshape(λ, 1, L, N) ⊠ B; dims=3); dims=(1, 3))
+
+    vec(∂M) .+= vec(∂Mq[1:Lₘ])
+    vec(∂q) .+= vec(∂Mq[(Lₘ + 1):end])
 
     return
 end
@@ -77,6 +124,8 @@ end
 @kwdef struct MixedComplementarityAdjoint{L}
     linsolve::L = nothing
 end
+
+@truncate_stacktrace MixedComplementarityAdjoint
 
 @views function ∇mixed_complementarity_problem!(cfg::RuleConfig{>:HasReverseMode},
     alg::MixedComplementarityAdjoint,

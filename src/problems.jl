@@ -7,6 +7,8 @@ struct LinearComplementarityProblem{MType, qType, uType} <:
     u0::uType
 end
 
+@truncate_stacktrace LinearComplementarityProblem
+
 const LCP = LinearComplementarityProblem
 
 struct MixedLinearComplementarityProblem{MType, qType, uType, LB, UB} <:
@@ -17,6 +19,8 @@ struct MixedLinearComplementarityProblem{MType, qType, uType, LB, UB} <:
     lb::LB
     ub::UB
 end
+
+@truncate_stacktrace MixedLinearComplementarityProblem
 
 const MLCP = MixedLinearComplementarityProblem
 
@@ -42,6 +46,8 @@ struct NonlinearComplementarityProblem{iip, F <: Function, uType, pType} <:
     p::pType
 end
 
+@truncate_stacktrace NonlinearComplementarityProblem 1
+
 const NCP = NonlinearComplementarityProblem
 
 function NCP(prob::LCP)
@@ -60,6 +66,8 @@ struct MixedComplementarityProblem{iip, F <: Function, uType, LB, UB, pType} <:
     ub::UB
     p::pType
 end
+
+@truncate_stacktrace MixedComplementarityProblem 1
 
 const MCP = MixedComplementarityProblem
 
