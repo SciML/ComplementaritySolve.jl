@@ -15,6 +15,7 @@ using ArrayInterfaceCore,
     Zygote
 import CommonSolve: init, solve, solve!
 import ChainRulesCore as CRC
+import TruncatedStacktraces: @truncate_stacktrace
 
 const ∂0 = ZeroTangent()
 const ∂∅ = NoTangent()
