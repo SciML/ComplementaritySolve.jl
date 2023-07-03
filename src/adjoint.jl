@@ -3,13 +3,13 @@
     linsolve::L = nothing
 end
 
-_Jq(z) = Diagonal((x -> isapprox(x, 0; rtol=1e-5, atol=1e-5) ? x : one(x)).(z))
+_Jq(z) = __diagonal((x -> isapprox(x, 0; rtol=1e-5, atol=1e-5) ? x : one(x)).(z))
 
 @views function ∇linear_complementarity_problem!(alg::LinearComplementarityAdjoint,
     ∂z,
-    z,
+    z::AbstractVector,
     ∂w,
-    w,
+    w::AbstractVector,
     ∂M,
     M,
     ∂q,
@@ -43,6 +43,54 @@ _Jq(z) = Diagonal((x -> isapprox(x, 0; rtol=1e-5, atol=1e-5) ? x : one(x)).(z))
     ∂Mq = λ' * B
 
     vec(∂M) .+= vec(∂Mq[1, 1:length(M)])
+    vec(∂q) .+= vec(∂Mq[1, (length(M) + 1):end])
+
+    return
+end
+
+@views function ∇linear_complementarity_problem!(alg::LinearComplementarityAdjoint,
+    ∂z,
+    z::AbstractArray{<:Number, 2},
+    ∂w,
+    w::AbstractArray{<:Number, 2},
+    ∂M,
+    M,
+    ∂q,
+    q)
+    ∂w === nothing && ∂z === nothing && return
+
+    if ∂w !== nothing
+        sum!(∂q, ∂w)
+        mul!(∂M, ∂w, z')
+        if ∂z === nothing
+            ∂z = M' * ∂w
+        elseif ArrayInterfaceCore.can_setindex(∂z)
+            ∂z .+= M' * ∂w
+        else
+            ∂z = ∂z .+ M' * ∂w
+        end
+    end
+
+    L, N = size(z)
+
+    u₋, v₋ = w, z
+    den = @. inv(√(u₋^2 + v₋^2))
+    ∂ϕ₋∂u₋ = __diagonal(@. 1 - u₋ * den)
+    ∂ϕ₋∂v₋ = __diagonal(@. 1 - v₋ * den)
+
+    A = __make_banded_diagonal_matrix(∂ϕ₋∂u₋ ⊠ reshape(M, L, L, 1) .+ ∂ϕ₋∂v₋)
+
+    B = -hcat(reshape(reshape(z, 1, 1, L, N) .* reshape(∂ϕ₋∂u₋, L, L, 1, N), L * L, L * N),
+        reshape(_Jq(z), L * L, N))
+
+    λ = reshape(solve(LinearProblem(A, vec(∂z)), alg.linsolve).u, L, N)
+    @show size(λ), size(B)
+    ∂Mq = sum(λ * B; dims=1)
+    @show size(∂Mq)
+
+    vec(∂M) .+= vec(∂Mq[1, 1:length(M)])
+    @show length(M), size(∂Mq)
+    @show size(∂q), size(∂Mq[1, (length(M) + 1):end])
     vec(∂q) .+= vec(∂Mq[1, (length(M) + 1):end])
 
     return

@@ -37,3 +37,44 @@ __notangent(::Any) = false
 
 __unfillarray(x::FillArrays.AbstractFill) = collect(x)
 __unfillarray(x) = x
+
+# Diagonal Utilities
+## FIXME: This needs to be optimized to not use an insane amount of
+## useless meemory, but for now this would work.
+function __diagonal(x::AbstractMatrix)
+    L, N = size(x)
+    y = similar(x, (L, L, N))
+    fill!(y, eltype(x)(0))
+    ind = diagind(selectdim(y, 3, 1))
+    for (i, x_) in enumerate(eachcol(x))
+        selectdim(y, 3, i)[ind] .= x_
+    end
+    return y
+end
+__diagonal(x) = Diagonal(x)
+
+function __make_square(x::AbstractMatrix)
+    L, N = size(x)
+    L == N && return x
+    if L > N
+        y = similar(x, (L, L - N))
+        fill!(y, eltype(x)(0))
+        return hcat(x, y)
+    else
+        y = similar(x, (N - L, N))
+        fill!(y, eltype(x)(0))
+        return vcat(x, y)
+    end
+end
+
+## FIXME: Don't Allocate the entire matrix
+function __make_banded_diagonal_matrix(x::AbstractArray{<:Number, 3})
+    L, K, N = size(x)
+    @assert L == K
+    y = similar(x, (L * N, L * N))
+    fill!(y, eltype(x)(0))
+    for (i, x_) in enumerate(eachslice(x; dims=3))
+        y[(i - 1) * L + 1:i * L, (i - 1) * L + 1:i * L] .= x_
+    end
+    return y
+end
