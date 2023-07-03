@@ -1,6 +1,7 @@
 module ComplementaritySolve
 
 using ArrayInterfaceCore,
+    BlockDiagonals,
     ChainRulesCore,
     CommonSolve,
     ComponentArrays,

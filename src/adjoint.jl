@@ -81,7 +81,7 @@ end
     ∂ϕ₋∂u₋ = __diagonal(@. 1 - u₋ * den)
     ∂ϕ₋∂v₋ = __diagonal(@. 1 - v₋ * den)
 
-    A = __make_banded_diagonal_matrix(∂ϕ₋∂u₋ ⊠ reshape(M, L, L, 1) .+ ∂ϕ₋∂v₋)
+    A = __make_block_diagonal_matrix(∂ϕ₋∂u₋ ⊠ reshape(M, L, L, 1) .+ ∂ϕ₋∂v₋)
 
     B = -hcat(reshape(reshape(z, 1, 1, L, N) .* reshape(∂ϕ₋∂u₋, L, L, 1, N), L, Lₘ, N),
         _Jq(z))
