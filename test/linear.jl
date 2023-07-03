@@ -1,4 +1,5 @@
-using ComplementaritySolve, ComponentArrays, SimpleNonlinearSolve, StableRNGs, Test, Zygote
+using ComplementaritySolve,
+    ComponentArrays, ForwardDiff, SimpleNonlinearSolve, StableRNGs, Test, Zygote
 
 @testset "LCPs" begin
     @testset "Basic LCPs" begin
@@ -33,21 +34,21 @@ using ComplementaritySolve, ComponentArrays, SimpleNonlinearSolve, StableRNGs, T
         end
 
         @testset "Adjoint Basic Test" begin
-            @testset "size(u0): $sz" for sz in ((2,), (2, 4))
+            @testset "size(u0): $sz" for sz in ((2,), (2, 3))
                 u0 = rand(StableRNG(0), sz...)
                 solver = NonlinearReformulation(:smooth, SimpleDFSane(; batched=true))
 
                 ∂A, ∂q = Zygote.gradient(A, q) do A, q
                     prob = LinearComplementarityProblem(A, q, u0)
                     sol = solve(prob, solver; sensealg=LinearComplementarityAdjoint())
-                    return sum(sol.z)
+                    return sum(abs2, sol.z)
                 end
 
                 θ = ComponentArray((; A, q))
                 ∂θ_fd = ForwardDiff.gradient(θ) do θ
                     prob = LinearComplementarityProblem(θ.A, θ.q, u0)
-                    sol = solve(prob, solver; sensealg=LinearComplementarityAdjoint())
-                    return sum(sol.z)
+                    sol = solve(prob, solver)
+                    return sum(abs2, sol.z)
                 end
 
                 @test ∂A !== nothing && !iszero(∂A)

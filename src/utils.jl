@@ -74,7 +74,7 @@ function __make_banded_diagonal_matrix(x::AbstractArray{<:Number, 3})
     y = similar(x, (L * N, L * N))
     fill!(y, eltype(x)(0))
     for (i, x_) in enumerate(eachslice(x; dims=3))
-        y[(i - 1) * L + 1:i * L, (i - 1) * L + 1:i * L] .= x_
+        y[((i - 1) * L + 1):(i * L), ((i - 1) * L + 1):(i * L)] .= x_
     end
     return y
 end

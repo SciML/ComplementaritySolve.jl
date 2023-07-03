@@ -1,4 +1,5 @@
 [deps]
+Aqua = "4c88cf16-eb10-579e-8560-4a9242c79595"
 ComponentArrays = "b0b7db55-cfe3-40fc-9ded-d10e2dbeff66"
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
 SafeTestsets = "1bc83da4-3b8d-516f-aca4-4fe02f6d838f"
