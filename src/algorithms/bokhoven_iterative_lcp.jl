@@ -1,0 +1,36 @@
+## Works only if M is positive definite and symmetric
+@kwdef struct BokhovenIterativeLCPAlgorithm{S} <: AbstractComplementarityAlgorithm
+    nlsolver::S = NewtonRaphson()
+end
+
+@truncate_stacktrace BokhovenIterativeLCPAlgorithm
+
+## NOTE: It is a steady state problem so we could in-principle use an ODE Solver
+function solve(prob::LinearComplementarityProblem,
+    alg::BokhovenIterativeLCPAlgorithm,
+    args...;
+    kwargs...)
+    A = pinv(I + prob.M)
+    B = A * (I - prob.M)
+    b = -A * prob.q
+
+    θ = vcat(vec(B), b)
+
+    _get_B(θ) = reshape(view(θ, 1:length(B)), size(B))
+    _get_b(θ) = view(θ, (length(B) + 1):length(θ))
+
+    function objective!(residual, u, θ)
+        mul!(residual, _get_B(θ), abs.(u))
+        residual .+= _get_b(θ) .- u
+        return residual
+    end
+
+    _prob = NonlinearProblem(NonlinearFunction{true}(objective!), prob.u0, θ)
+    sol = solve(_prob, alg.nlsolver; kwargs...)
+
+    z = abs.(sol.u)
+    b .= z .- sol.u # |u| - u # This is `w`. Just reusing `b` to save memory
+    z .+= sol.u     # |u| + u
+
+    return LinearComplementaritySolution(z, b, sol.resid, prob, alg)
+end

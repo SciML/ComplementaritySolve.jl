@@ -26,11 +26,21 @@ const ∅p = SciMLBase.NullParameters()
 # Needs upstreaming
 ArrayInterfaceCore.can_setindex(::Type{<:FillArrays.AbstractFill}) = false
 
+abstract type AbstractComplementarityAlgorithm end
+
 include("utils.jl")
-include("problems.jl")
-include("algorithms.jl")
+
+include("problems/complementarity_problems.jl")
+include("problems/complementarity_systems.jl")
+
+include("algorithms/bokhoven_iterative_lcp.jl")
+include("algorithms/nonlinear_reformulation.jl")
+include("algorithms/rpsor.jl")
+
 include("solutions.jl")
-include("adjoint.jl")
+
+include("sensitivity/lcp.jl")
+include("sensitivity/mcp.jl")
 
 export LinearComplementarityProblem,
     MixedLinearComplementarityProblem,
