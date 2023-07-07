@@ -1,7 +1,6 @@
 module ComplementaritySolve
 
 using ArrayInterfaceCore,
-    BlockDiagonals,
     ChainRulesCore,
     CommonSolve,
     ComponentArrays,
@@ -10,6 +9,7 @@ using ArrayInterfaceCore,
     LinearSolve,
     NonlinearSolve,
     NNlib,
+    Polyester,
     SimpleNonlinearSolve,
     SciMLBase,
     SciMLOperators,
