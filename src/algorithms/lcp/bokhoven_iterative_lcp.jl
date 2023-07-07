@@ -1,6 +1,11 @@
 ## Works only if M is positive definite and symmetric
+<<<<<<< HEAD:src/algorithms/lcp/bokhoven_iterative_lcp.jl
 @concrete struct BokhovenIterativeLCPAlgorithm <: AbstractComplementarityAlgorithm
     nlsolver
+=======
+Base.@kwdef struct BokhovenIterativeLCPAlgorithm{S} <: AbstractComplementarityAlgorithm
+    nlsolver::S = NewtonRaphson()
+>>>>>>> e74aebc (First steps towards complementarity systems):src/algorithms/bokhoven_iterative_lcp.jl
 end
 
 BokhovenIterativeLCPAlgorithm() = BokhovenIterativeLCPAlgorithm(NewtonRaphson())
