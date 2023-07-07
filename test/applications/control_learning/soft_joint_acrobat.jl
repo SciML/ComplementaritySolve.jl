@@ -10,6 +10,7 @@ using ComplementaritySolve,
     SimpleNonlinearSolve,
     SparseArrays,
     StableRNGs,
+    Statistics,
     SteadyStateDiffEq,
     Test,
     Zygote
@@ -59,54 +60,147 @@ stable_L = Float32[-4.13 4.13]
 
 stable_θ = ComponentArray(; K=stable_K, L=stable_L)
 
+function finite_horizon_ode_test(θ)
+    prob = LCS(x0, controller, tspan, θ, A, B, D, a, E, F, c)
+    solver = NaiveLCSAlgorithm(Tsit5(), NonlinearReformulation())
+    sol = solve(prob, solver; abstol=1.0f-6, reltol=1.0f-6)
+
+    @test sol isa SciMLBase.ODESolution
+    @test SciMLBase.successful_retcode(sol)
+    @test all(Base.Fix1(all, isfinite), sol.u)
+
+    ∂θ = only(Zygote.gradient(θ) do θ
+        prob = LCS(x0, controller, tspan, θ, A, B, D, a, E, F, c)
+        sol = solve(prob,
+            solver;
+            ode_kwargs=(; sensealg=BacksolveAdjoint(; autojacvec=ZygoteVJP())),
+            lcp_kwargs=(; sensealg=LinearComplementarityAdjoint()))
+        return sum(abs2, last(sol.u))
+    end)
+
+    @test all(isfinite, ∂θ)
+
+    ∂θ_fd = ForwardDiff.gradient(θ) do θ
+        prob = LCS(x0, controller, tspan, θ, A, B, D, a, E, F, c)
+        sol = solve(prob, solver)
+        return sum(abs2, last(sol.u))
+    end
+
+    @test ∂θ≈∂θ_fd atol=1e-2 rtol=1e-2
+end
+
+function steady_state_test(θ)
+    prob = LCS(x0, controller, (first(tspan), Inf32), θ, A, B, D, a, E, F, c)
+    solver = NaiveLCSAlgorithm(DynamicSS(Tsit5();
+            termination_condition=NLSolveTerminationCondition(NLSolveTerminationMode.AbsNorm;
+                abstol=1.0f-2,
+                reltol=1.0f-2)),
+        NonlinearReformulation())
+    sol = solve(prob, solver; abstol=1.0f-6, reltol=1.0f-6)
+
+    @test sol isa SciMLBase.NonlinearSolution
+    @test SciMLBase.successful_retcode(sol)
+    @test all(Base.Fix1(all, isfinite), sol.u)
+
+    ∂θ = only(Zygote.gradient(θ) do θ
+        prob = LCS(x0, controller, (first(tspan), Inf32), θ, A, B, D, a, E, F, c)
+        sol = solve(prob,
+            solver;
+            ode_kwargs=(; sensealg=SteadyStateAdjoint(; autojacvec=ZygoteVJP())),
+            lcp_kwargs=(; sensealg=LinearComplementarityAdjoint()))
+        return sum(abs2, last(sol.u))
+    end)
+
+    @test all(isfinite, ∂θ)
+
+    ∂θ_fd = ForwardDiff.gradient(θ) do θ
+        prob = LCS(x0, controller, (first(tspan), Inf32), θ, A, B, D, a, E, F, c)
+        sol = solve(prob, solver)
+        return sum(abs2, last(sol.u))
+    end
+
+    @test ∂θ≈∂θ_fd atol=1e-2 rtol=1e-2
+end
+
 @testset "Stable Controller" begin
     @testset "Finite Horizon ODE" begin
-        prob = LCS(x0, controller, tspan, stable_θ, A, B, D, a, E, F, c)
-        solver = NaiveLCSAlgorithm(Tsit5(), NonlinearReformulation())
-        sol = solve(prob, solver; abstol=1.0f-3, reltol=1.0f-3)
-
-        @test sol isa SciMLBase.ODESolution
-        @test SciMLBase.successful_retcode(sol)
-        @test all(Base.Fix1(all, isfinite), sol.u)
-
-        @test begin
-            ∂stable_θ_ode = only(Zygote.gradient(stable_θ) do θ
-                prob = LCS(x0, controller, tspan, θ, A, B, D, a, E, F, c)
-                sol = solve(prob,
-                    solver;
-                    ode_kwargs=(; sensealg=BacksolveAdjoint(; autojacvec=ZygoteVJP())),
-                    lcp_kwargs=(; sensealg=LinearComplementarityAdjoint()))
-                return sum(abs2, last(sol.u))
-            end)
-
-            all(isfinite, ∂stable_θ_ode)
-        end
+        finite_horizon_ode_test(stable_θ)
     end
 
     @testset "Solve to Infinity (Steady-State)" begin
-        prob = LCS(x0, controller, (first(tspan), Inf32), stable_θ, A, B, D, a, E, F, c)
-        solver = NaiveLCSAlgorithm(DynamicSS(Tsit5();
-                termination_condition=NLSolveTerminationCondition(NLSolveTerminationMode.AbsNorm;
-                    abstol=1.0f-2,
-                    reltol=1.0f-2)),
-            NonlinearReformulation())
-        sol = solve(prob, solver; abstol=1.0f-3, reltol=1.0f-3)
+        steady_state_test(stable_θ)
+    end
+end
 
-        @test sol isa SciMLBase.NonlinearSolution
-        @test SciMLBase.successful_retcode(sol)
-        @test all(isfinite, sol.u)
+@testset "Parameter Estimation" begin
+    prob = LCS(x0, controller, tspan, stable_θ, A, B, D, a, E, F, c)
+    solver = NaiveLCSAlgorithm(Vern9(), NonlinearReformulation())
+    sol = solve(prob, solver; abstol=1.0f-8, reltol=1.0f-8)
 
-        @test begin
-            ∂stable_θ_ode = only(Zygote.gradient(stable_θ) do θ
-                prob = LCS(x0, controller, (first(tspan), Inf32), θ, A, B, D, a, E, F, c)
-                sol = solve(prob,
-                    solver;
-                    ode_kwargs=(; sensealg=SteadyStateAdjoint(; autojacvec=ZygoteVJP())),
-                    lcp_kwargs=(; sensealg=LinearComplementarityAdjoint()))
-                return sum(abs2, last(sol.u))
-            end)
+    @testset "# of Samples: $N" for N in (10, 100, 1000)
+        N > length(sol.t) && continue
+        # Generate some data
+        idxs = unique(sort(rand(rng, 1:length(sol.t), N)))
+        target_us = hcat(sol.u[idxs]...)
+        ts = sol.t[idxs]
 
-            all(isfinite, ∂stable_θ_ode)
+        # Initialize the controller
+        θ_init = ComponentArray(;
+            K=randn(rng, Float32, 1, 4),
+            L=randn(rng, Float32, 1, 2)) .* 0.0001f0
+        solver = NaiveLCSAlgorithm(Tsit5(), NonlinearReformulation())
+
+        function loss_function(θ)
+            prob = LCS(x0, controller, tspan, θ, A, B, D, a, E, F, c)
+            lcs_sol = solve(prob,
+                solver;
+                abstol=1.0f-3,
+                reltol=1.0f-3,
+                ode_kwargs=(; saveat=ts))
+            return mean(abs2, reduce(hcat, lcs_sol.u) .- target_us)
         end
+
+        iter = 0
+
+        function callback_parameter_estim(θ, loss)
+            iter += 1
+            if iter % 100 == 1 || loss ≤ 0.01f0
+                @info "Parameter Estimation with $N datapoints" iter=iter loss=loss
+            end
+            return loss ≤ 0.01f0
+        end
+
+        # Warmup
+        callback_parameter_estim(θ_init, loss_function(θ_init))
+        Zygote.gradient(loss_function, θ_init)
+
+        adtype = Optimization.AutoZygote()
+        optf = Optimization.OptimizationFunction((x, p) -> loss_function(x), adtype)
+        optprob = Optimization.OptimizationProblem(optf, θ_init)
+
+        optsol = Optimization.solve(optprob,
+            ADAM(0.05);
+            callback=callback_parameter_estim,
+            maxiters=1000)
+
+        optprob = Optimization.OptimizationProblem(optf, optsol.minimizer)
+
+        optsol = Optimization.solve(optprob,
+            ADAM(0.001);
+            callback=callback_parameter_estim,
+            maxiters=1000)
+
+        θ_estimated = optsol.minimizer
+
+        # Convergence Test
+        @test loss_function(θ_estimated) ≤ 0.01f0
+
+        # Run the simulation with the estimated parameters
+        @testset "Finite Horizon ODE" begin
+            finite_horizon_ode_test(θ_estimated)
+        end
+
+        # These controllers have no reason to be stable to infinity
+        # Skip those tests here
     end
 end

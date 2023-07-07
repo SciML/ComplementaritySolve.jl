@@ -19,8 +19,8 @@ function solve(prob::LinearComplementaritySystem{sstate},
 
     ode_prob = ODEProblem(ODEFunction{false}(dxdt), x0, tspan, p)
     if sstate
-        # Solve for Equilibrium instead of integrating till Inf. Mostly useful for training
-        # controllers. Expect the ode_solver to be DynamicSS
+        # Solve for Equilibrium instead of integrating till Inf.
+        # Expect the ode_solver to be DynamicSS
         return solve(SteadyStateProblem(ode_prob), alg.ode_solver; ode_kwargs..., kwargs...)
     else
         return solve(ode_prob, alg.ode_solver; ode_kwargs..., kwargs...)
