@@ -53,6 +53,13 @@ function __diagonal(x::AbstractMatrix)
 end
 __diagonal(x) = Diagonal(x)
 
-function __make_block_diagonal_matrix(x::AbstractArray{<:Number, 3})
-    return BlockDiagonal(collect(eachslice(x; dims=3)))
+function __make_block_diagonal_operator(x::AbstractArray{<:Number, 3})
+    L, M, N = size(x)  # L == M
+    @views function matvec(v::AbstractVector, u::AbstractVector, p, t)
+        @batch per=core for i in 1:N
+            mul!(v[((i - 1) * L + 1):(i * L)], x[:, :, i], u[((i - 1) * L + 1):(i * L)])
+        end
+        return v
+    end
+    return FunctionOperator(matvec, similar(x, N * L))
 end

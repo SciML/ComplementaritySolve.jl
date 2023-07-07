@@ -33,7 +33,7 @@ function __lcp_gradient_computation(z::AbstractMatrix,
     Lₘ,
     N,
     linsolve)
-    A = __make_block_diagonal_matrix(∂ϕ₋∂u₋ ⊠ reshape(M, L, L, 1) .+ ∂ϕ₋∂v₋)
+    A = __make_block_diagonal_operator(∂ϕ₋∂u₋ ⊠ reshape(M, L, L, 1) .+ ∂ϕ₋∂v₋)
     B = -hcat(reshape(reshape(z, 1, 1, L, N) .* reshape(∂ϕ₋∂u₋, L, L, 1, N), L, Lₘ, N),
         _Jq(z))
     λ = reshape(solve(LinearProblem(A, __unfillarray(vec(∂z))), linsolve).u, L, N)
