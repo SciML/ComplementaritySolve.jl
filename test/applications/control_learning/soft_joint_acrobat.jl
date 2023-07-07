@@ -179,18 +179,18 @@ end
         optprob = Optimization.OptimizationProblem(optf, θ_init)
 
         optsol = Optimization.solve(optprob,
-            ADAM(0.05);
+            Adam(0.05);
             callback=callback_parameter_estim,
             maxiters=1000)
 
-        optprob = Optimization.OptimizationProblem(optf, optsol.minimizer)
+        optprob = Optimization.OptimizationProblem(optf, optsol.u)
 
         optsol = Optimization.solve(optprob,
-            ADAM(0.001);
+            Adam(0.001);
             callback=callback_parameter_estim,
             maxiters=1000)
 
-        θ_estimated = optsol.minimizer
+        θ_estimated = optsol.u
 
         # Convergence Test
         @test loss_function(θ_estimated) ≤ 0.01f0
