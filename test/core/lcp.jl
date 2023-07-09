@@ -1,6 +1,8 @@
 using ComplementaritySolve,
     ComponentArrays, ForwardDiff, SimpleNonlinearSolve, StableRNGs, Test, Zygote
 
+rng = StableRNG(0)
+
 @testset "LCPs" begin
     @testset "Basic LCPs" begin
         # https://optimization.cbe.cornell.edu/index.php?title=Linear_complementarity_problem
@@ -21,7 +23,7 @@ using ComplementaritySolve,
         end
 
         @testset "Batched Version" begin
-            prob = LinearComplementarityProblem(A, q, rand(StableRNG(0), 2, 4))
+            prob = LinearComplementarityProblem(A, q, rand(rng, 2, 4))
 
             solver = NonlinearReformulation(:smooth, SimpleDFSane(; batched=true))
 
@@ -38,41 +40,54 @@ using ComplementaritySolve,
                 u0 = rand(StableRNG(0), sz...)
                 solver = NonlinearReformulation(:smooth, SimpleDFSane(; batched=true))
 
-                ∂A, ∂q = Zygote.gradient(A, q) do A, q
-                    prob = LinearComplementarityProblem(A, q, u0)
-                    sol = solve(prob, solver; sensealg=LinearComplementarityAdjoint())
-                    return sum(abs2, sol.z)
+                for loss_function in (sum, Base.Fix1(sum, abs2))
+                    ∂A, ∂q = Zygote.gradient(A, q) do A, q
+                        prob = LinearComplementarityProblem(A, q, u0)
+                        sol = solve(prob, solver; sensealg=LinearComplementarityAdjoint())
+                        return loss_function(sol.z)
+                    end
+
+                    θ = ComponentArray((; A, q))
+                    ∂θ_fd = ForwardDiff.gradient(θ) do θ
+                        prob = LinearComplementarityProblem(θ.A, θ.q, u0)
+                        sol = solve(prob, solver)
+                        return loss_function(sol.z)
+                    end
+
+                    @test ∂A !== nothing && !iszero(∂A)
+                    @test ∂q !== nothing && !iszero(∂q)
+                    @test ∂A≈∂θ_fd.A atol=5e-2 rtol=5e-2
+                    @test ∂q≈∂θ_fd.q atol=5e-2 rtol=5e-2
                 end
+            end
 
-                θ = ComponentArray((; A, q))
-                ∂θ_fd = ForwardDiff.gradient(θ) do θ
-                    prob = LinearComplementarityProblem(θ.A, θ.q, u0)
-                    sol = solve(prob, solver)
-                    return sum(abs2, sol.z)
+            @testset "Batched Adjoint Problem" begin
+                szA = (2, 2, 5)
+                szq = (2, 5)
+                A_ = rand(rng, Float32, szA...)
+                q_ = randn(rng, Float32, szq...)
+
+                solver = NonlinearReformulation(:smooth, SimpleDFSane(; batched=true))
+
+                for loss_function in (sum, Base.Fix1(sum, abs2))
+                    ∂A, ∂q = Zygote.gradient(A_, q_) do A, q
+                        prob = LinearComplementarityProblem(A, q)
+                        sol = solve(prob, solver; sensealg=LinearComplementarityAdjoint())
+                        return loss_function(sol.z) + loss_function(sol.w)
+                    end
+
+                    θ = ComponentArray((; A=A_, q=q_))
+                    ∂θ_fd = ForwardDiff.gradient(θ) do θ
+                        prob = LinearComplementarityProblem(θ.A, θ.q)
+                        sol = solve(prob, solver)
+                        return loss_function(sol.z) + loss_function(sol.w)
+                    end
+
+                    @test ∂A !== nothing && !iszero(∂A)
+                    @test ∂q !== nothing && !iszero(∂q)
+                    @test ∂A≈∂θ_fd.A atol=5e-2 rtol=5e-2
+                    @test ∂q≈∂θ_fd.q atol=5e-2 rtol=5e-2
                 end
-
-                @test ∂A !== nothing && !iszero(∂A)
-                @test ∂q !== nothing && !iszero(∂q)
-                @test ∂A≈∂θ_fd.A atol=5e-2 rtol=5e-2
-                @test ∂q≈∂θ_fd.q atol=5e-2 rtol=5e-2
-
-                ∂A, ∂q = Zygote.gradient(A, q) do A, q
-                    prob = LinearComplementarityProblem(A, q, u0)
-                    sol = solve(prob, solver; sensealg=LinearComplementarityAdjoint())
-                    return sum(sol.z)  # Test that we can handle FillArrays
-                end
-
-                θ = ComponentArray((; A, q))
-                ∂θ_fd = ForwardDiff.gradient(θ) do θ
-                    prob = LinearComplementarityProblem(θ.A, θ.q, u0)
-                    sol = solve(prob, solver)
-                    return sum(sol.z)
-                end
-
-                @test ∂A !== nothing && !iszero(∂A)
-                @test ∂q !== nothing && !iszero(∂q)
-                @test ∂A≈∂θ_fd.A atol=5e-2 rtol=5e-2
-                @test ∂q≈∂θ_fd.q atol=5e-2 rtol=5e-2
             end
         end
     end
