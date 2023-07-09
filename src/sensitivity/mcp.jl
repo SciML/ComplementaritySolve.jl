@@ -24,14 +24,14 @@ end
     A₂ = ∂ϕ₊∂v₊ * ∂ϕ₋∂u₋ + ∂ϕ₋∂v₋
     if length(u) ≤ 50
         # Construct the Full Matrix
-        A = only(Zygote.jacobian(x -> f(x, p), u))' * A₁ .+ A₂
+        A = only(Zygote.jacobian(Base.Fix2(f, p), u))' * A₁ .+ A₂
     else
         # Use Matrix Free Methods
         A = __fixed_vecjac_operator(f, u, p, A₁, A₂)
     end
     λ = solve(LinearProblem(A, __unfillarray(∂u)), alg.linsolve).u
 
-    _, pb_f = Zygote.pullback(p -> f(u, p), p)
+    _, pb_f = Zygote.pullback(Base.Fix1(f, u), p)
     vec(∂p) .= -vec(only(pb_f((A₁ * λ)')))
 
     return

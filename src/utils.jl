@@ -8,14 +8,14 @@ Jϕ₊u₊(u₊, v₊, bound) = oftype(u₊, 1) + u₊ / √(u₊^2 + v₊^2)
 Jϕ₊v₊(u₊, v₊, bound) = isfinite(bound) ? (one(u₊) + v₊ / √(u₊^2 + v₊^2)) : zero(u₊)
 @inline function Jϕ₊(fx, x, bound)
     v₊ = x .- bound
-    return Diagonal(Jϕ₊u₊.(fx, v₊, bound)), Diagonal(Jϕ₊v₊.(fx, v₊, bound))
+    return __diagonal(Jϕ₊u₊.(fx, v₊, bound)), __diagonal(Jϕ₊v₊.(fx, v₊, bound))
 end
 
 Jϕ₋u₋(u₋, v₋, bound) = oftype(u₋, 1) - u₋ / √(u₋^2 + v₋^2)
 Jϕ₋v₋(u₋, v₋, bound) = isfinite(bound) ? (one(u₋) - v₋ / √(u₋^2 + v₋^2)) : zero(u₋)
 @inline function Jϕ₋(fx, x, bound)
     v₋ = x .- bound
-    return Diagonal(Jϕ₋u₋.(fx, v₋, bound)), Diagonal(Jϕ₋v₋.(fx, v₋, bound))
+    return __diagonal(Jϕ₋u₋.(fx, v₋, bound)), __diagonal(Jϕ₋v₋.(fx, v₋, bound))
 end
 
 @inline minmax_transform(fx, x, lb, ub) = min(max(fx, x - ub), x - lb)
@@ -51,7 +51,7 @@ function __diagonal(x::AbstractMatrix)
     end
     return y
 end
-__diagonal(x) = Diagonal(x)
+__diagonal(x::AbstractVector) = Diagonal(x)
 
 function __make_block_diagonal_operator(x::AbstractArray{<:Number, 3})
     L, M, N = size(x)  # L == M

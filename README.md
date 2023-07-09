@@ -11,3 +11,23 @@ with ChainRules.
 
 Add a specific version of `SimpleNonlinearSolve.jl` with
 `] add https://github.com/avik-pal/SimpleNonlinearSolve.jl#ap/batch_revamp`
+
+## Implemented Problems & Algorithms
+
+### Complementarity Problems
+
+* Linear Complementarity Problems (LCP)
+  * Nonlinear Reformulation
+  * RPSOR
+    * PSOR
+    * PGS
+    * RPGS
+  * Bokhoven Iterative Method
+* Mixed Linear Complementarity Problems (MLCP)
+* Nonlinear Complementarity Problems (NCP)
+* Mixed Complementarity Problems (MCP)
+  * Nonlinear Reformulation
+
+## Usage
+
+More details are WIP. Examples can be found in `test` directory.
