@@ -1,12 +1,20 @@
 using SafeTestsets, Test
 
 @testset "Complementarity Solve" begin
-    @testset "Complementarity Problems" begin
+    @testset "Core" begin
         @safetestset "Linear Complementarity Problems" begin
             include("core/lcp.jl")
         end
         @safetestset "Mixed Complementarity Problems" begin
             include("core/mcp.jl")
+        end
+    end
+
+    @testset "Applications" begin
+        @testset "Differentiable Controller Learning" begin
+            @safetestset "Acrobot with Soft Joint Limits" begin
+                include("applications/control_learning/soft_joint_acrobat.jl")
+            end
         end
     end
 

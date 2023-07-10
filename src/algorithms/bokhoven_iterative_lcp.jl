@@ -1,5 +1,5 @@
 ## Works only if M is positive definite and symmetric
-@kwdef struct BokhovenIterativeLCPAlgorithm{S} <: AbstractComplementarityAlgorithm
+Base.@kwdef struct BokhovenIterativeLCPAlgorithm{S} <: AbstractComplementarityAlgorithm
     nlsolver::S = NewtonRaphson()
 end
 
