@@ -8,30 +8,19 @@ function Base.show(io::IO, sol::AbstractLinearComplementaritySolution)
     return
 end
 
-struct LinearComplementaritySolution{
-    zType,
-    wType,
-    residType,
-    P <: AbstractComplementarityProblem,
-    A <: AbstractComplementarityAlgorithm,
-} <: AbstractLinearComplementaritySolution
-    z::zType
-    w::wType
-    resid::residType
-    prob::P
-    alg::A
+@concrete struct LinearComplementaritySolution <: AbstractLinearComplementaritySolution
+    z
+    w
+    resid
+    prob
+    alg
 end
 
-struct MixedComplementaritySolution{
-    uType,
-    residType,
-    P <: AbstractComplementarityProblem,
-    A <: AbstractComplementarityAlgorithm,
-} <: AbstractComplementaritySolution
-    u::uType
-    resid::residType
-    prob::P
-    alg::A
+@concrete struct MixedComplementaritySolution <: AbstractComplementaritySolution
+    u
+    resid
+    prob
+    alg
 end
 
 function Base.show(io::IO, sol::MixedComplementaritySolution)

@@ -1,6 +1,8 @@
-@kwdef struct LinearComplementarityAdjoint{L}
-    linsolve::L = nothing
+@concrete struct LinearComplementarityAdjoint
+    linsolve
 end
+
+LinearComplementarityAdjoint() = LinearComplementarityAdjoint(nothing)
 
 @truncate_stacktrace LinearComplementarityAdjoint
 

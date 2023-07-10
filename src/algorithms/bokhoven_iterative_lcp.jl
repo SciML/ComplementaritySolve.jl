@@ -1,7 +1,9 @@
 ## Works only if M is positive definite and symmetric
-Base.@kwdef struct BokhovenIterativeLCPAlgorithm{S} <: AbstractComplementarityAlgorithm
-    nlsolver::S = NewtonRaphson()
+@concrete struct BokhovenIterativeLCPAlgorithm <: AbstractComplementarityAlgorithm
+    nlsolver
 end
+
+BokhovenIterativeLCPAlgorithm() = BokhovenIterativeLCPAlgorithm(NewtonRaphson())
 
 @truncate_stacktrace BokhovenIterativeLCPAlgorithm
 

@@ -1,6 +1,6 @@
-struct NaiveLCSAlgorithm{O, L} <: AbstractComplementaritySystemAlgorithm
-    ode_solver::O
-    lcp_solver::L
+@concrete struct NaiveLCSAlgorithm <: AbstractComplementaritySystemAlgorithm
+    ode_solver
+    lcp_solver
 end
 
 function solve(prob::LinearComplementaritySystem{sstate},

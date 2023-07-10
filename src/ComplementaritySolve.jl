@@ -7,6 +7,7 @@ using ArrayInterfaceCore,
     ChainRulesCore,
     CommonSolve,
     ComponentArrays, # doesn't need a dependency on this (remove)
+    ConcreteStructs,
     FillArrays, # only for Zygote (move to ext later)
     LinearAlgebra,
     LinearSolve, # doesn't need a dependency on this (users must load this though)
