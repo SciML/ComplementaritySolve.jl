@@ -1,12 +1,12 @@
 # Reformulate Problems as a Nonlinear Problem
-struct NonlinearReformulation{method, S} <: AbstractComplementarityAlgorithm
-    nlsolver::S
+@concrete struct NonlinearReformulation{method} <: AbstractComplementarityAlgorithm
+    nlsolver
 end
 
 @truncate_stacktrace NonlinearReformulation 1
 
 function NonlinearReformulation(method::Symbol=:smooth, nlsolver=NewtonRaphson())
-    return NonlinearReformulation{method, typeof(nlsolver)}(nlsolver)
+    return NonlinearReformulation{method}(nlsolver)
 end
 
 for method in (:minmax, :smooth)

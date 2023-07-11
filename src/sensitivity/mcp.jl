@@ -1,7 +1,9 @@
 ## FIXME: Support batching for the solvers
-@kwdef struct MixedComplementarityAdjoint{L}
-    linsolve::L = nothing
+@concrete struct MixedComplementarityAdjoint
+    linsolve
 end
+
+MixedComplementarityAdjoint() = MixedComplementarityAdjoint(nothing)
 
 @truncate_stacktrace MixedComplementarityAdjoint
 
