@@ -1,3 +1,9 @@
+cd(@__DIR__)
+
+using Pkg
+Pkg.activate(".")
+
+
 using Zygote,
     LinearAlgebra,
     SimpleNonlinearSolve,
@@ -128,7 +134,7 @@ end
     iter = 0
 
     function callback(θ, loss)
-        global iter += 1
+        iter += 1
         if iter % 100 == 1 || loss ≤ 0.01
             @info "Parameter Estimation with datapoints" iter=iter loss=loss
         end
@@ -142,19 +148,19 @@ end
     optprob = Optimization.OptimizationProblem(optf, θ_init)
 
     result_neurallcs = Optimization.solve(optprob,
-        ADAM(0.05);
+        ADAM(0.1);
         callback=callback,
-        maxiters=10000)
+        maxiters=5000)
 
     optprob2 = Optimization.OptimizationProblem(optf, result_neurallcs.u)
 
     result_neurallcs2 = Optimization.solve(optprob2,
-        ADAM(0.02);
+        ADAM(0.001);
         callback=callback,
         maxiters=10000)
 
     θ_estimated = result_neurallcs2.u
 
     # Convergence Test
-    @test loss_f(θ_estimated) ≤ 1.1
+    @test loss_f(θ_estimated) ≤ 0.5
 end
