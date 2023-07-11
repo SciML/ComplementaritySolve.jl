@@ -30,7 +30,7 @@ function solve(prob::LinearComplementarityProblem{iip, false},
     w_ρ = M * z .+ q
     err = tol
 
-    for iter in 1:maxiters
+    for _ in 1:maxiters
         zprev .= z
         for i in eachindex(z)
             z[i] = max(0, z[i] - ω / (M[i, i] + ρ) * (w_ρ[i] - ρ * z[i]))

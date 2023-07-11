@@ -6,7 +6,7 @@ LinearComplementarityAdjoint() = LinearComplementarityAdjoint(nothing)
 
 @truncate_stacktrace LinearComplementarityAdjoint
 
-_Jq(z) = __diagonal((x -> isapprox(x, 0; rtol=1e-5, atol=1e-5) ? x : one(x)).(z))
+_Jq(z) = __diagonal(one.(z))
 
 __get_lcp_dimensions(z::AbstractVector, M) = (length(z), -1), length(z)^2
 __get_lcp_dimensions(z::AbstractMatrix, M) = size(z), prod(size(M)[1:2])
@@ -20,8 +20,10 @@ function __lcp_gradient_computation(z::AbstractVector,
     Lₘ,
     _,
     linsolve)
-    A = ∂ϕ₋∂u₋ * M + ∂ϕ₋∂v₋
-    B = -hcat(reshape(reshape(z, 1, 1, L) .* reshape(∂ϕ₋∂u₋, L, L, 1), L, Lₘ), _Jq(z))
+    A = M' * ∂ϕ₋∂u₋ + ∂ϕ₋∂v₋
+    # Following line is same as -∂ϕ₋∂u₋ * reduce(hcat, Zygote.jacobian((A, q) -> A * z .+ q, A, q))
+    B = -hcat(reshape(reshape(z, 1, 1, L) .* reshape(∂ϕ₋∂u₋, L, L, 1), L, Lₘ),
+        ∂ϕ₋∂u₋ * _Jq(z))
     λ = solve(LinearProblem(A, __unfillarray(∂z)), linsolve).u
     return vec(λ' * B)
 end
@@ -35,9 +37,9 @@ function __lcp_gradient_computation(z::AbstractMatrix,
     Lₘ,
     N,
     linsolve)
-    A = __make_block_diagonal_operator(∂ϕ₋∂u₋ ⊠ M .+ ∂ϕ₋∂v₋)
+    A = __make_block_diagonal_operator(batched_transpose(M) ⊠ ∂ϕ₋∂u₋ .+ ∂ϕ₋∂v₋)
     B = -hcat(reshape(reshape(z, 1, 1, L, N) .* reshape(∂ϕ₋∂u₋, L, L, 1, N), L, Lₘ, N),
-        _Jq(z))
+        ∂ϕ₋∂u₋ ⊠ _Jq(z))
     λ = reshape(solve(LinearProblem(A, __unfillarray(vec(∂z))), linsolve).u, L, N)
     return dropdims(reshape(λ, 1, L, N) ⊠ B; dims=1)
 end
@@ -65,23 +67,16 @@ end
             mul!(∂M, ∂w, z')
         end
 
-        ∂z_ = if batched
-            batched_transpose(M) ⊠ ∂w
-        else
-            M' * ∂w
-        end
+        ∂z_ = batched ? batched_transpose(M) ⊠ ∂w : M' * ∂w
         if ∂z === nothing
             ∂z = ∂z_
-        elseif ArrayInterfaceCore.can_setindex(∂z)
-            if batched
-                ∂z = reshape(∂z, size(∂z, 1), 1, size(∂z, 2))
-            end
-            ∂z .+= ∂z_
         else
-            if batched
-                ∂z = reshape(∂z, size(∂z, 1), 1, size(∂z, 2))
+            batched && (∂z = reshape(∂z, size(∂z, 1), 1, size(∂z, 2)))
+            if ArrayInterfaceCore.can_setindex(∂z)
+                ∂z .+= ∂z_
+            else
+                ∂z = ∂z .+ ∂z_
             end
-            ∂z = ∂z .+ ∂z_
         end
     end
 
@@ -100,6 +95,8 @@ end
     return
 end
 
+# FIXME: All calls to solve now go through this function, but it should be dispatched only
+#        if the sensealg is LinearComplementarityAdjoint.
 function CRC.rrule(::typeof(solve),
     prob::LinearComplementarityProblem{iip, batched},
     alg;

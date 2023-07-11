@@ -34,14 +34,16 @@ rng = StableRNG(0)
             solver = NonlinearReformulation(method, NewtonRaphson())
             @testset "θ: $(θ)" for θ in feasible_parameters
                 @testset "out-of-place" begin
-                    prob = MCP{false}(f, u0, lower_bound, upper_bound, θ)
+                    # FIXME: Default to unbatched
+                    prob = MCP{false, false}(f, u0, lower_bound, upper_bound, θ)
                     sol = solve(prob, solver)
 
                     @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
                 end
 
                 @testset "in-place" begin
-                    prob = MCP{true}(f!, u0, lower_bound, upper_bound, θ)
+                    # FIXME: Default to unbatched
+                    prob = MCP{true, false}(f!, u0, lower_bound, upper_bound, θ)
                     sol = solve(prob, solver)
 
                     @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4

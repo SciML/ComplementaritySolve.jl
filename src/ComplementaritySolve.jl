@@ -28,8 +28,10 @@ const ∂0 = ZeroTangent()
 const ∂∅ = NoTangent()
 const ∅p = SciMLBase.NullParameters()
 
-# Needs upstreaming
+### ----- Type Piracy Starts ----- ###
 ArrayInterfaceCore.can_setindex(::Type{<:FillArrays.AbstractFill}) = false
+ArrayInterfaceCore.can_setindex(::Zygote.OneElement) = false
+### ------ Type Piracy Ends ------ ###
 
 abstract type AbstractComplementarityAlgorithm end
 abstract type AbstractComplementaritySystemAlgorithm end
@@ -43,7 +45,9 @@ include("algorithms/generic.jl")
 include("algorithms/lcp/nonlinear_reformulation.jl")
 include("algorithms/lcp/bokhoven_iterative_lcp.jl")
 include("algorithms/lcp/rpsor.jl")
+include("algorithms/lcp/fallback.jl")
 include("algorithms/mcp/nonlinear_reformulation.jl")
+include("algorithms/lcs/naive_lcs.jl")
 
 include("solutions.jl")
 
