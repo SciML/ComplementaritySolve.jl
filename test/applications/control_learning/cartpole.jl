@@ -128,7 +128,7 @@ end
     function loss_f(θ)
         prob = LCS(x0, controller, tspan, θ, A, B, D, a, E, F, c)
         lcs_sol = solve(prob, solver; abstol=1e-3, reltol=1e-3)
-        return sum((lcs_sol.u[end]) .^ 2) / n
+        return sum(abs2, lcs_sol.u[end]) / n
     end
 
     iter = 0
