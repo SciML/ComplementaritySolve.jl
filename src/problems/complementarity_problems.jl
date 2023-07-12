@@ -1,16 +1,129 @@
-abstract type AbstractComplementarityProblem{iip} end
+abstract type AbstractComplementarityProblem{iip, batched} end
 
-@concrete struct LinearComplementarityProblem <: AbstractComplementarityProblem{false}
+SciMLBase.isinplace(::AbstractComplementarityProblem{iip}) where {iip} = iip
+isbatched(::AbstractComplementarityProblem{iip, batched}) where {iip, batched} = batched
+
+@concrete struct LinearComplementarityProblem{iip, batched} <:
+                 AbstractComplementarityProblem{iip, batched}
     M
     q
     u0
 end
 
-@truncate_stacktrace LinearComplementarityProblem
+function LinearComplementarityProblem{iip}(M, q, u0=nothing) where {iip}
+    # By default, set iip to true since that is faster
+    # For AD support, we need to set iip to false
+    if u0 !== nothing && ndims(u0) == 2 && ndims(M) == 2 && ndims(q) == 1
+        # If u0 is batched while problem is not, then reshape the problem
+        M = repeat(reshape(M, size(M)..., 1); outer=(1, 1, size(u0, 2)))
+        q = repeat(reshape(q, length(q), 1); outer=(1, size(u0, 2)))
+    end
+    batched = ndims(M) == 3
+    if u0 === nothing
+        u0 = zero(q)
+    elseif batched && ndims(u0) == 1
+        @warn "Incorrect batched version specification for `u0`. Reshaping to \
+            ($(length(u0)), 1)."
+        u0 = reshape(u0, :, 1)
+    end
+    if batched
+        if !(ndims(q) == ndims(u0) == 2)
+            throw(ArgumentError("Incorrect batched version specification: \
+                ndims(M) = 3, ndims(q) = $(ndims(q)), \
+                ndims(u0) = $(ndims(u0))!"))
+        end
+        if size(u0, ndims(u0)) != size(q, ndims(q)) ||
+           size(q, ndims(q)) != size(M, ndims(M)) ||
+           size(u0, ndims(u0)) != size(M, ndims(M))
+            throw(ArgumentError("Batch Sizes are inconsistent across M, q, u0!"))
+        end
+    else
+        if ndims(q) != 1 || ndims(u0) != 1
+            throw(ArgumentError("`M` is not batched, but `q` ($(ndims(q))) or `u0` \
+                                 ($(ndims(u0))) are!"))
+        end
+    end
+    return LinearComplementarityProblem{iip, batched}(M, q, u0)
+end
+
+LinearComplementarityProblem(args...) = LinearComplementarityProblem{true}(args...)
+
+for iip in (true, false)
+    @eval function CRC.rrule(::Type{LinearComplementarityProblem{$iip}},
+        M,
+        q,
+        args...;
+        kwargs...)
+        prob = LinearComplementarityProblem{$iip}(M, q, args...; kwargs...)
+        function ∇LinearComplementarityProblem(Δ)
+            if __notangent(Δ)
+                ∂M = ∂∅
+                ∂q = ∂∅
+            else
+                if isbatched(prob) && ndims(M) != ndims(Δ.M) && ndims(q) != ndims(Δ.q)
+                    ∂M = dropdims(sum(Δ.M; dims=ndims(Δ.M)); dims=ndims(Δ.M))
+                    ∂q = dropdims(sum(Δ.q; dims=ndims(Δ.q)); dims=ndims(Δ.q))
+                else
+                    ∂M = Δ.M
+                    ∂q = Δ.q
+                end
+            end
+            return ∂∅, ∂M, ∂q, ∂0
+        end
+        return prob, ∇LinearComplementarityProblem
+    end
+end
+
+@truncate_stacktrace LinearComplementarityProblem 1 2
 
 const LCP = LinearComplementarityProblem
 
-@concrete struct MixedLinearComplementarityProblem <: AbstractComplementarityProblem{false}
+function (prob::LCP{iip, batched})() where {iip, batched}
+    f, u0 = if iip
+        if batched
+            function f_batched!(out, u, θ)
+                M = reshape(view(θ, 1:length(prob.M)), size(prob.M))
+                q = reshape(view(θ, (length(prob.M) + 1):length(θ)), size(prob.q, 1), 1, :)
+                out .= q
+                batched_mul!(out, M, reshape(u, size(u, 1), 1, :), true, true)
+                return out
+            end
+            f_batched!, reshape(prob.u0, size(prob.u0, 1), 1, :)
+        else
+            function f_unbatched!(out, u, θ)
+                M = reshape(view(θ, 1:length(prob.M)), size(prob.M))
+                q = view(θ, (length(prob.M) + 1):length(θ))
+                out .= q
+                mul!(out, M, u, true, true)
+                return out
+            end
+            f_unbatched!, prob.u0
+        end
+    else
+        if batched
+            function f_batched(u, θ)
+                M = reshape(view(θ, 1:length(prob.M)), size(prob.M))
+                q = reshape(view(θ, (length(prob.M) + 1):length(θ)), size(prob.q, 1), 1, :)
+                return M ⊠ u .+ q
+            end
+            f_batched, reshape(prob.u0, size(prob.u0, 1), 1, :)
+        else
+            function f_unbatched(u, θ)
+                M = reshape(view(θ, 1:length(prob.M)), size(prob.M))
+                q = view(θ, (length(prob.M) + 1):length(θ))
+                return M * u .+ q
+            end
+            f_unbatched, prob.u0
+        end
+    end
+
+    θ = vcat(vec(prob.M), vec(prob.q))
+
+    return f, u0, θ
+end
+
+@concrete struct MixedLinearComplementarityProblem{iip, batched} <:
+                 AbstractComplementarityProblem{iip, batched}
     M
     q
     u0
@@ -22,15 +135,15 @@ end
 
 const MLCP = MixedLinearComplementarityProblem
 
-function MLCP(prob::LCP)
+function MLCP(prob::LCP{iip, batched}) where {iip, batched}
     lb = zero(prob.u0)
     ub = similar(prob.u0)
     fill!(ub, eltype(prob.u0)(Inf))
-    return MLCP(prob.M, prob.q, prob.u0, lb, ub)
+    return MLCP{iip, batched}(prob.M, prob.q, prob.u0, lb, ub)
 end
 
 @concrete struct NonlinearComplementarityProblem{iip, F <: Function} <:
-                 AbstractComplementarityProblem{iip}
+                 AbstractComplementarityProblem{iip, false}
     f::F
     u0
     p
@@ -40,12 +153,13 @@ end
 
 const NCP = NonlinearComplementarityProblem
 
-function NCP(prob::LCP)
-    return NCP{false}((x, θ) -> θ.M * x + θ.q, prob.u0, ComponentArray((; prob.M, prob.q)))
+function NCP(prob::LCP{iip, batched}) where {iip, batched}
+    f, u0, θ = prob()
+    return NCP{iip, batched}(f, u0, θ)
 end
 
-@concrete struct MixedComplementarityProblem{iip, F <: Function} <:
-                 AbstractComplementarityProblem{iip}
+@concrete struct MixedComplementarityProblem{iip, batched, F <: Function} <:
+                 AbstractComplementarityProblem{iip, batched}
     f::F
     u0
     lb
@@ -58,15 +172,3 @@ end
 const MCP = MixedComplementarityProblem
 
 MCP(prob::LCP) = MCP(NCP(prob))
-
-function MCP(prob::MLCP)
-    p = ComponentArray((; prob.M, prob.q))
-    return MCP{false}((x, θ) -> θ.M * x + θ.q, prob.u0, prob.lb, prob.ub, p)
-end
-
-function MCP(prob::NCP{iip}) where {iip}
-    lb = zero(prob.u0)
-    ub = similar(prob.u0)
-    fill!(ub, eltype(prob.u0)(Inf))
-    return MCP{iip}(prob.f, prob.u0, lb, ub, prob.p)
-end
