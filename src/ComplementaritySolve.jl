@@ -10,7 +10,7 @@ using ArrayInterfaceCore,
     ConcreteStructs,
     FillArrays, # only for Zygote (move to ext later)
     LinearAlgebra,
-    LinearSolve, # doesn't need a dependency on this (users must load this though)
+    LinearSolve,
     Markdown,
     NonlinearSolve, # doesn't need a dependency on this (remove)
     NNlib, # batching support (move to ext later)
@@ -47,6 +47,7 @@ include("algorithms/generic.jl")
 include("algorithms/lcp/nonlinear_reformulation.jl")
 include("algorithms/lcp/bokhoven_iterative_lcp.jl")
 include("algorithms/lcp/rpsor.jl")
+include("algorithms/lcp/infeasible_interior_point.jl")
 include("algorithms/lcp/fallback.jl")
 include("algorithms/mcp/nonlinear_reformulation.jl")
 include("algorithms/mcp/pathsolver.jl")

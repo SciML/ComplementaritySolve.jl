@@ -22,12 +22,18 @@ Add a specific version of `SimpleNonlinearSolve.jl` with
     * PSOR
     * PGS
     * RPGS
-  * Bokhoven Iterative Method
+  * Bokhoven Iterative Method (Symmetric + PSD `M`)
+  * InfeasibleInteriorPointMethod (monotone LCP / PSD but not Symmetric `M`)
 * Mixed Linear Complementarity Problems (MLCP)
 * Nonlinear Complementarity Problems (NCP)
 * Mixed Complementarity Problems (MCP)
   * Nonlinear Reformulation
   * PATH Solver (via [PATHSolver.jl](https://github.com/chkwon/PATHSolver.jl))
+
+### Complementarity Systems
+
+* Linear Complementarity System (LCS)
+  * Naive LCS (takes a ODE solver and an LCP solver)
 
 ## Usage
 
