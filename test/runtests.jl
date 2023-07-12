@@ -13,7 +13,7 @@ using SafeTestsets, Test
     @testset "Applications" begin
         @testset "Differentiable Controller Learning" begin
             @safetestset "Acrobot with Soft Joint Limits" begin
-                include("applications/control_learning/soft_joint_acrobat.jl")
+                include("applications/control_learning/soft_joint_acrobot.jl")
             end
         end
     end

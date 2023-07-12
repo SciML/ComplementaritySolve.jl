@@ -1,4 +1,5 @@
-using ComplementaritySolve,
+using ChainRulesCore,
+    ComplementaritySolve,
     ComponentArrays,
     DiffEqBase,
     ForwardDiff,
