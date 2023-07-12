@@ -12,8 +12,21 @@ function __feasible_steplength(x, Δx; dims=:)
     return min(T(0.999) * η, T(1))
 end
 
+function __make_itp_linsolve_operator(M::AbstractMatrix,
+    zₖ::AbstractVector,
+    wₖ::AbstractVector)
+    L = length(zₖ)
+    @views function matvec(v::AbstractVector, u::AbstractVector, p, t)
+        Δz, Δw = u[1:L], u[(L + 1):(2L)]
+        v[1:L] .= M * Δz .- Δw
+        v[(L + 1):(2L)] .= zₖ .* Δw .+ wₖ .* Δz
+        return v
+    end
+    return FunctionOperator(matvec, similar(zₖ, 2L))
+end
+
 ## For details see https://sites.math.washington.edu/~burke/crs/408f/notes/lcp/lcp.pdf
-function solve(prob::LinearComplementarityProblem{false, false},
+@views function solve(prob::LinearComplementarityProblem{false, false},
     alg::InfeasibleInteriorPointMethod;
     maxiters=1000,
     kwargs...)
@@ -32,7 +45,10 @@ function solve(prob::LinearComplementarityProblem{false, false},
 
     while τ > ϵ || ρ > ϵ || iter ≤ maxiters
         # Linear Solve
-        A = __make_block_matrix_operator([M -I(size(M, 1)); Diagonal(w) Diagonal(z)])
+        A = __make_itp_linsolve_operator(M, z, w)
+        b = vcat(-M * z .+ w .- q, σ * τ .- z .* w)
+        Δzw = solve(LinearProblem(A, b), alg.linsolve; kwargs...)
+        Δz, Δw = Δzw[1:length(z)], Δzw[(length(z) + 1):(2 * length(z))]
 
         η₁ = __feasible_steplength(z, Δz)
         η₂ = __feasible_steplength(w, Δw)

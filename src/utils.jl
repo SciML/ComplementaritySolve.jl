@@ -63,8 +63,3 @@ function __make_block_diagonal_operator(x::AbstractArray{<:Number, 3})
     end
     return FunctionOperator(matvec, similar(x, N * L))
 end
-
-function __make_block_matrix_operator(x::Matrix{T}) where {T <: AbstractMatrix}
-    sizes = size.(x)
-    error("TODO")
-end
