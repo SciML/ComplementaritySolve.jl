@@ -61,7 +61,8 @@ export LinearComplementarityProblem,
     MixedComplementarityProblem
 export LinearComplementaritySystem
 export LCP, MLCP, NCP, MCP, LCS  # Short aliases
-export BokhovenIterativeLCPAlgorithm, NonlinearReformulation, RPSOR, PGS, PSOR, RPGS
+export BokhovenIterativeLCPAlgorithm,
+    NonlinearReformulation, RPSOR, PGS, PSOR, RPGS, InfeasibleInteriorPointMethod
 export NaiveLCSAlgorithm
 export LinearComplementarityAdjoint, MixedComplementarityAdjoint
 export LinearComplementaritySolution, MixedComplementaritySolution
