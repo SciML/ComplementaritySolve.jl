@@ -72,5 +72,5 @@ end
         iter += 1
     end
 
-    return LinearComplementaritySolution(z, w, nothing, prob, alg)
+    return LinearComplementaritySolution(z, w, w .- M * z .- q, prob, alg)
 end
