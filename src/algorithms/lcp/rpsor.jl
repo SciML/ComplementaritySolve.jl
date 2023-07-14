@@ -39,11 +39,10 @@ function solve(prob::LinearComplementarityProblem{iip, false},
         end
 
         err = __error_estimate(prob, z, w_ρ)
-        err > tol && continue
+        if err ≤ tol
+            return LinearComplementaritySolution(z, [err], prob, alg, ReturnCode.Success)
+        end
     end
 
-    w = w_ρ
-    w .= M * z .+ q
-
-    return LinearComplementaritySolution(z, w, err, prob, alg)
+    return LinearComplementaritySolution(z, [err], prob, alg, ReturnCode.MaxIters)
 end

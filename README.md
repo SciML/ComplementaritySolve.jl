@@ -23,7 +23,7 @@ Add a specific version of `SimpleNonlinearSolve.jl` with
     * PGS
     * RPGS
   * Bokhoven Iterative Method (PSD `M` / monotone LCP)
-  * InfeasibleInteriorPointMethod (PSD `M` / monotone LCP)
+  * Infeasible Interior Point Method (PSD `M` / monotone LCP)
 * Mixed Linear Complementarity Problems (MLCP)
 * Nonlinear Complementarity Problems (NCP)
 * Mixed Complementarity Problems (MCP)

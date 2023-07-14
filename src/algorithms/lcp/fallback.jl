@@ -10,11 +10,12 @@
         solver;
         kwargs...)
 
-    zs = similar(sol_first.z, length(sol_first.z), size(prob.u0, 2))
-    ws = similar(sol_first.w, length(sol_first.w), size(prob.u0, 2))
+    us = similar(sol_first.u, length(sol_first.u), size(prob.u0, 2))
     # Residual might be nothing
-    residual = sol_first.resid === nothing ? nothing :
-               similar(sol_first.resid, length(sol_first.resid), size(prob.u0, 2))
+    residual = sol_first.residual === nothing ? nothing :
+               similar(sol_first.residual, length(sol_first.residual), size(prob.u0, 2))
+    return_codes = Vector{ReturnCode.T}(undef, size(prob.u0, 2))
+    return_codes[1] = sol_first.retcode
 
     Threads.@threads for i in 1:size(prob.u0, 2)
         sol = solve(LinearComplementarityProblem{iip}(prob.M[:, :, i],
@@ -22,10 +23,10 @@
                 prob.u0[:, i]),
             solver;
             kwargs...)
-        zs[:, i] .= sol.z
-        ws[:, i] .= sol.w
-        residual !== nothing && (residual[:, i] .= sol.resid)
+        us[:, i] .= sol.u
+        residual !== nothing && (residual[:, i] .= sol.residual)
+        return_codes[i] = sol.retcode
     end
 
-    return LinearComplementaritySolution(zs, ws, residual, prob, solver)
+    return LinearComplementaritySolution(us, residual, prob, solver, maximum(return_codes))
 end

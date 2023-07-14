@@ -1,15 +1,15 @@
 ## Works only if M is positive definite and symmetric
-@concrete struct BokhovenIterativeLCPAlgorithm <: AbstractComplementarityAlgorithm
+@concrete struct BokhovenIterativeAlgorithm <: AbstractComplementarityAlgorithm
     nlsolver
 end
 
-BokhovenIterativeLCPAlgorithm() = BokhovenIterativeLCPAlgorithm(NewtonRaphson())
+BokhovenIterativeAlgorithm() = BokhovenIterativeAlgorithm(NewtonRaphson())
 
-@truncate_stacktrace BokhovenIterativeLCPAlgorithm
+@truncate_stacktrace BokhovenIterativeAlgorithm
 
 ## NOTE: It is a steady state problem so we could in-principle use an ODE Solver
 function solve(prob::LinearComplementarityProblem{iip, false},
-    alg::BokhovenIterativeLCPAlgorithm,
+    alg::BokhovenIterativeAlgorithm,
     args...;
     kwargs...) where {iip}
     A = pinv(I + prob.M)
@@ -36,9 +36,7 @@ function solve(prob::LinearComplementarityProblem{iip, false},
     end
     sol = solve(_prob, alg.nlsolver; kwargs...)
 
-    z = abs.(sol.u)
-    b .= z .- sol.u # |u| - u # This is `w`. Just reusing `b` to save memory
-    z .+= sol.u     # |u| + u
+    z = abs.(sol.u) .+ sol.u
 
-    return LinearComplementaritySolution(z, b, sol.resid, prob, alg)
+    return LinearComplementaritySolution(z, sol.resid, prob, alg, sol.retcode)
 end

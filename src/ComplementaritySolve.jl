@@ -45,7 +45,7 @@ include("problems/complementarity_systems.jl")
 
 include("algorithms/generic.jl")
 include("algorithms/lcp/nonlinear_reformulation.jl")
-include("algorithms/lcp/bokhoven_iterative_lcp.jl")
+include("algorithms/lcp/bokhoven_iterative.jl")
 include("algorithms/lcp/rpsor.jl")
 include("algorithms/lcp/infeasible_interior_point.jl")
 include("algorithms/lcp/fallback.jl")
@@ -64,7 +64,7 @@ export LinearComplementarityProblem,
     MixedComplementarityProblem
 export LinearComplementaritySystem
 export LCP, MLCP, NCP, MCP, LCS  # Short aliases
-export BokhovenIterativeLCPAlgorithm,
+export BokhovenIterativeAlgorithm,
     NonlinearReformulation, RPSOR, PGS, PSOR, RPGS, InfeasibleInteriorPointMethod
 export PathSolverAlgorithm
 export NaiveLCSAlgorithm
