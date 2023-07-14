@@ -7,12 +7,12 @@ InfeasibleInteriorPointMethod() = InfeasibleInteriorPointMethod(nothing)
 
 function __feasible_steplength(x, Δx; dims=:)
     T = eltype(x)
-    z = x ./ Δx
+    z = x ./ (Δx .+ eps(T))
     η = minimum(zᵢ -> ifelse(zᵢ ≥ 0, eltype(x)(Inf), -zᵢ), z; dims)
     return min(T(0.999) * η, T(1))
 end
 
-function __make_itp_linsolve_operator(M::AbstractMatrix,
+function __make_ipm_linsolve_operator(M::AbstractMatrix,
     zₖ::AbstractVector,
     wₖ::AbstractVector)
     L = length(zₖ)
@@ -36,16 +36,22 @@ end
     ϵ = eps(T)
     σ = zero(T)
 
-    z = copy(u0)
+    z = if iszero(u0)
+        # Zero Initialization does work correctly with this version of IPM
+        _z = similar(u0)
+        fill!(_z, T(2))
+    else
+        copy(u0)
+    end
     w = min.(M * z .+ q, T(2))
 
     τ = dot(z, w)
     ρ = norm(M * z .+ q .- z, Inf)
     iter = 0
 
-    while τ > ϵ || ρ > ϵ || iter ≤ maxiters
+    while τ > ϵ && ρ > ϵ && iter ≤ maxiters
         # Linear Solve
-        A = __make_itp_linsolve_operator(M, z, w)
+        A = __make_ipm_linsolve_operator(M, z, w)
         b = vcat(-M * z .+ w .- q, σ * τ .- z .* w)
         Δzw = solve(LinearProblem(A, b), alg.linsolve; kwargs...)
         Δz, Δw = Δzw[1:length(z)], Δzw[(length(z) + 1):(2 * length(z))]
@@ -65,4 +71,6 @@ end
 
         iter += 1
     end
+
+    return LinearComplementaritySolution(z, w, nothing, prob, alg)
 end

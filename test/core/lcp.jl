@@ -21,6 +21,7 @@ rng = StableRNG(0)
             BokhovenIterativeLCPAlgorithm(),
             RPSOR(; ω=1.0, ρ=0.1),
             PGS(),
+            InfeasibleInteriorPointMethod(),
         ]
             sol = solve(prob, solver)
 
@@ -37,6 +38,7 @@ rng = StableRNG(0)
                 PGS(),
                 PSOR(),
                 NonlinearReformulation(:smooth, SimpleDFSane(; batched=true)),
+                InfeasibleInteriorPointMethod(),
             ]
                 sol = solve(prob, solver)
 
