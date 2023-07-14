@@ -25,7 +25,7 @@ rng = StableRNG(0)
         ]
             sol = solve(prob, solver)
 
-            @test sol.z≈[4.0 / 3, 7.0 / 3] rtol=1e-3
+            @test sol.u≈[4.0 / 3, 7.0 / 3] rtol=1e-3
             @test sol.w≈[0.0, 0.0] atol=1e-6
         end
 
@@ -42,7 +42,7 @@ rng = StableRNG(0)
             ]
                 sol = solve(prob, solver)
 
-                @test all(z -> ≈(z, [4.0 / 3, 7.0 / 3]; rtol=1e-3), eachcol(sol.z))
+                @test all(z -> ≈(z, [4.0 / 3, 7.0 / 3]; rtol=1e-3), eachcol(sol.u))
                 @test all(w -> ≈(w, [0.0, 0.0]; atol=1e-3), eachcol(sol.w))
             end
         end
@@ -57,21 +57,21 @@ rng = StableRNG(0)
                     ∂A, ∂q = Zygote.gradient(A, q) do A, q
                         prob = LinearComplementarityProblem{false}(A, q, u0)
                         sol = solve(prob, solver; sensealg=LinearComplementarityAdjoint())
-                        return loss_function(sol.z) + loss_function(sol.w)
+                        return loss_function(sol.u)
                     end
 
                     θ = ComponentArray((; A, q))
                     ∂θ_fd = ForwardDiff.gradient(θ) do θ
                         prob = LinearComplementarityProblem{false}(θ.A, θ.q, u0)
                         sol = solve(prob, solver)
-                        return loss_function(sol.z) + loss_function(sol.w)
+                        return loss_function(sol.u)
                     end
 
                     (∂θ_finitediff,) = FiniteDifferences.grad(central_fdm(3, 1),
                         θ -> begin
                             prob = LinearComplementarityProblem{false}(θ.A, θ.q, u0)
                             sol = solve(prob, PGS())
-                            return loss_function(sol.z) + loss_function(sol.w)
+                            return loss_function(sol.u)
                         end,
                         θ)
 
@@ -98,21 +98,21 @@ rng = StableRNG(0)
                     ∂A, ∂q = Zygote.gradient(A_, q_) do A, q
                         prob = LinearComplementarityProblem{false}(A, q)
                         sol = solve(prob, solver; sensealg=LinearComplementarityAdjoint())
-                        return loss_function(sol.z) + loss_function(sol.w)
+                        return loss_function(sol.u)
                     end
 
                     θ = ComponentArray((; A=A_, q=q_))
                     ∂θ_fd = ForwardDiff.gradient(θ) do θ
                         prob = LinearComplementarityProblem{false}(θ.A, θ.q)
                         sol = solve(prob, solver)
-                        return loss_function(sol.z) + loss_function(sol.w)
+                        return loss_function(sol.u)
                     end
 
                     (∂θ_finitediff,) = FiniteDifferences.grad(central_fdm(3, 1),
                         θ -> begin
                             prob = LinearComplementarityProblem{false}(θ.A, θ.q)
                             sol = solve(prob, PGS())
-                            return loss_function(sol.z) + loss_function(sol.w)
+                            return loss_function(sol.u)
                         end,
                         θ)
 
