@@ -19,7 +19,9 @@ using ArrayInterfaceCore,
     SciMLBase,
     SciMLOperators, # for MCP sensitivities (move to ext later)
     SparseArrays, # Can be dropped?
-    Zygote # For MCP sensitivities (move to ext later)
+    Zygote, # For MCP sensitivities (move to ext later)
+    PATHSolver, # For MCP 
+    ForwardDiff # For MCP
 import CommonSolve: init, solve, solve!
 import ChainRulesCore as CRC
 import TruncatedStacktraces: @truncate_stacktrace
@@ -47,6 +49,7 @@ include("algorithms/lcp/bokhoven_iterative_lcp.jl")
 include("algorithms/lcp/rpsor.jl")
 include("algorithms/lcp/fallback.jl")
 include("algorithms/mcp/nonlinear_reformulation.jl")
+include("algorithms/mcp/pathsolver.jl")
 include("algorithms/lcs/naive_lcs.jl")
 
 include("solutions.jl")
@@ -61,6 +64,7 @@ export LinearComplementarityProblem,
 export LinearComplementaritySystem
 export LCP, MLCP, NCP, MCP, LCS  # Short aliases
 export BokhovenIterativeLCPAlgorithm, NonlinearReformulation, RPSOR, PGS, PSOR, RPGS
+export PathSolverAlgorithm
 export NaiveLCSAlgorithm
 export LinearComplementarityAdjoint, MixedComplementarityAdjoint
 export LinearComplementaritySolution, MixedComplementaritySolution
