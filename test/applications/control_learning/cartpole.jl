@@ -1,8 +1,3 @@
-cd(@__DIR__)
-
-using Pkg
-Pkg.activate(".")
-
 using Zygote,
     LinearAlgebra,
     SimpleNonlinearSolve,
