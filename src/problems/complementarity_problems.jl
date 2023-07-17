@@ -172,3 +172,17 @@ end
 const MCP = MixedComplementarityProblem
 
 MCP(prob::LCP) = MCP(NCP(prob))
+
+function MCP(prob::NCP{iip, batched}) where {iip, batched}
+    lb = zero(prob.u0)
+    ub = similar(prob.u0)
+    fill!(ub, eltype(prob.u0)(Inf))
+    return MCP{iip, batched}(prob.f, prob.u0, lb, ub, prob.p)
+end
+
+MCP(f, u0, lb, ub, p) = MCP{SciMLBase.isinplace(f, 3)}(f, u0, lb, ub, p)
+
+function MCP{iip}(f, u0, lb, ub, p) where {iip}
+    batched = ndims(u0) ≥ 2 # Assume batched in this case
+    return MCP{iip, batched}(f, u0, lb, ub, p)
+end

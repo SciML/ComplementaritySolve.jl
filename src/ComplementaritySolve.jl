@@ -19,6 +19,7 @@ using ArrayInterfaceCore,
     SciMLBase,
     SciMLOperators, # for MCP sensitivities (move to ext later)
     SparseArrays, # Can be dropped?
+    SparseDiffTools, # For MCP sensitivities (move to ext later)
     Zygote, # For MCP sensitivities (move to ext later)
     PATHSolver, # For MCP 
     ForwardDiff # For MCP
@@ -50,6 +51,7 @@ include("algorithms/lcp/rpsor.jl")
 include("algorithms/lcp/fallback.jl")
 include("algorithms/mcp/nonlinear_reformulation.jl")
 include("algorithms/mcp/pathsolver.jl")
+include("algorithms/mcp/fallback.jl")
 include("algorithms/lcs/naive_lcs.jl")
 
 include("solutions.jl")

@@ -1,6 +1,12 @@
 using ComplementaritySolve
 using ComponentArrays,
-    ForwardDiff, NonlinearSolve, SimpleNonlinearSolve, StableRNGs, Test, Zygote
+    FiniteDifferences,
+    ForwardDiff,
+    NonlinearSolve,
+    SimpleNonlinearSolve,
+    StableRNGs,
+    Test,
+    Zygote
 
 rng = StableRNG(0)
 
@@ -25,20 +31,13 @@ rng = StableRNG(0)
         lower_bound = Float32[-Inf, -Inf, 0, 0]
         upper_bound = Float32[Inf, Inf, Inf, Inf]
 
-        @testset "Nonlinear Reformulation: $(method)" for method in (:smooth, :minmax)
-            solver = NonlinearReformulation(method, NewtonRaphson())
-            @testset "θ: $(θ)" for θ in feasible_parameters
-                @testset "out-of-place" begin
-                    # FIXME: Default to unbatched
-                    prob = MCP{false, false}(f, u0, lower_bound, upper_bound, θ)
-                    sol = solve(prob, solver)
+        @testset "θ: $(θ)" for θ in feasible_parameters
+            @testset "Problem Function: $(func)" for func in (f, f!)
+                prob = MCP(func, u0, lower_bound, upper_bound, θ)
 
-                    @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
-                end
-
-                @testset "in-place" begin
-                    # FIXME: Default to unbatched
-                    prob = MCP{true, false}(f!, u0, lower_bound, upper_bound, θ)
+                @testset "Solver: $(typeof(solver))" for solver in (PATHSolverAlgorithm(),
+                    NonlinearReformulation(:smooth, NewtonRaphson()),
+                    NonlinearReformulation(:minmax, NewtonRaphson()))
                     sol = solve(prob, solver)
 
                     @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
@@ -46,23 +45,27 @@ rng = StableRNG(0)
             end
         end
 
-        @testset "PATH Solver" begin
-            # https://github.com/chkwon/PATHSolver.jl/blob/master/src/C_API.jl#L459
-            @testset "θ: $(θ)" for θ in feasible_parameters
-                @testset "out of place" begin
-                    solver = PATHSolverAlgorithm()
-                    prob = MCP{false, false}(f, u0, lower_bound, upper_bound, θ)
-                    sol = solve(prob, solver)
-                    @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
-                end
-
-                @testset "in-place" begin
-                    solver = PATHSolverAlgorithm()
-                    prob = MCP{true, false}(f!, u0, lower_bound, upper_bound, θ)
-                    sol = solve(prob, solver)
-                    @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
-                end
+        @testset "Adjoint Tests" begin
+            function loss_function(θ, solver)
+                prob = MCP(f, u0, lower_bound, upper_bound, θ)
+                sol = solve(prob, solver; sensealg=MixedComplementarityAdjoint())
+                return sum(sol.u)
             end
+
+            loss_function_path = Base.Fix2(loss_function, PATHSolverAlgorithm())
+            loss_function_nr = Base.Fix2(loss_function,
+                NonlinearReformulation(:smooth, NewtonRaphson()))
+
+            θ = [2.0, -3.0]
+            ∂θ_zygote = only(Zygote.gradient(loss_function_path, θ))
+            (∂θ_finitediff,) = FiniteDifferences.grad(central_fdm(3, 1),
+                loss_function_path,
+                θ)
+            # FD cant differentiate through the PATH solver (C Code)
+            ∂θ_forwarddiff = ForwardDiff.gradient(loss_function_nr, θ)
+
+            @test ∂θ_zygote≈∂θ_forwarddiff atol=1e-3 rtol=1e-3
+            @test ∂θ_zygote≈∂θ_finitediff atol=1e-3 rtol=1e-3
         end
     end
 end
