@@ -1,11 +1,6 @@
-using ComplementaritySolve,
-    ComponentArrays,
-    ForwardDiff,
-    NonlinearSolve,
-    SimpleNonlinearSolve,
-    StableRNGs,
-    Test,
-    Zygote
+using ComplementaritySolve
+using ComponentArrays,
+    ForwardDiff, NonlinearSolve, SimpleNonlinearSolve, StableRNGs, Test, Zygote, PATHSolver
 
 rng = StableRNG(0)
 
@@ -46,6 +41,18 @@ rng = StableRNG(0)
                     prob = MCP{true, false}(f!, u0, lower_bound, upper_bound, θ)
                     sol = solve(prob, solver)
 
+                    @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
+                end
+            end
+        end
+
+        @testset "Pathsolver" begin
+            # https://github.com/chkwon/PATHSolver.jl/blob/master/src/C_API.jl#L459
+            @testset "θ: $(θ)" for θ in feasible_parameters
+                @testset "out of place" begin
+                    solver = PathSolverAlgorithm()
+                    prob = MCP{false, false}(f, u0, lower_bound, upper_bound, θ)
+                    sol = solve(prob, solver)
                     @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
                 end
             end
