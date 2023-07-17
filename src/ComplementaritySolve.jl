@@ -19,7 +19,6 @@ using ArrayInterfaceCore,
     SciMLBase,
     SciMLOperators, # for MCP sensitivities (move to ext later)
     SparseArrays, # Can be dropped?
-    SparseDiffTools, # For MCP sensitivities (move to ext later)
     Zygote, # For MCP sensitivities (move to ext later)
     PATHSolver, # For MCP 
     ForwardDiff # For MCP

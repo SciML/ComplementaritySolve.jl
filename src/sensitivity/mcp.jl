@@ -29,6 +29,8 @@ MixedComplementarityAdjoint() = MixedComplementarityAdjoint(nothing)
         A = only(Zygote.jacobian(Base.Fix2(f, p), u))' * A₁ .+ A₂
     else
         # Use Matrix Free Methods
+        ## NOTE: If we use SparseDiffTools here we will have to mess around with a wrapper
+        ##       over the FunctionOperator
         A = __fixed_vecjac_operator(f, u, p, A₁, A₂)
     end
     λ = solve(LinearProblem(A, __unfillarray(∂u)), alg.linsolve).u
@@ -65,7 +67,6 @@ function CRC.rrule(cfg::RuleConfig{>:HasReverseMode},
     return sol, ∇mcpsolve
 end
 
-## TODO: Use SparseDiffTools v2
 function __fixed_vecjac_operator(f, y, p, A₁, A₂)
     input, pb_f = Zygote.pullback(x -> f(x, p), y)
     output = only(pb_f(input))
