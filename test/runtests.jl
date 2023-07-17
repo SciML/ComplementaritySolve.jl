@@ -19,6 +19,12 @@ using SafeTestsets, Test
             @safetestset "Acrobot with Soft Joint Limits" begin
                 include("applications/control_learning/soft_joint_acrobot.jl")
             end
+            @safetestset "Cart Pole with Soft Walls" begin
+                include("applications/control_learning/cartpole.jl")
+            end
+            @safetestset "Partial State Feedback" begin
+                include("applications/control_learning/partial_state_feedback.jl")
+            end
         end
     end
 
