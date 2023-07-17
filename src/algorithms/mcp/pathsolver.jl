@@ -1,8 +1,6 @@
 struct PATHSolverAlgorithm <: AbstractComplementarityAlgorithm end
 
-function solve(prob::MixedComplementarityProblem{iip},
-    alg::PATHSolverAlgorithm;
-    kwargs...) where {iip}
+function solve(prob::MCP{iip}, alg::PATHSolverAlgorithm; kwargs...) where {iip}
     (; f, u0, lb, ub, p) = prob
 
     (u0, lb, ub, p) = map((u0, lb, ub, p)) do x

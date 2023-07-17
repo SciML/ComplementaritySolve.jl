@@ -12,6 +12,10 @@ using SafeTestsets, Test
 
     @testset "Applications" begin
         @testset "Differentiable Controller Learning" begin
+            # @safetestset "Cartpole" begin
+            #     include("applications/control_learning/cartpole.jl")
+            # end
+
             @safetestset "Acrobot with Soft Joint Limits" begin
                 include("applications/control_learning/soft_joint_acrobot.jl")
             end

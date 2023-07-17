@@ -58,7 +58,7 @@ rng = StableRNG(0)
 
                 @testset "in-place" begin
                     solver = PATHSolverAlgorithm()
-                    prob = MCP{true, false}(f, u0, lower_bound, upper_bound, θ)
+                    prob = MCP{true, false}(f!, u0, lower_bound, upper_bound, θ)
                     sol = solve(prob, solver)
                     @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
                 end

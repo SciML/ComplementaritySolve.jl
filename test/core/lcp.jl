@@ -42,8 +42,7 @@ rng = StableRNG(0)
                 sol = solve(prob, solver)
 
                 @test all(z -> ≈(z, [4.0 / 3, 7.0 / 3]; rtol=1e-3), eachcol(sol.u))
-                @test all(((i, z),) -> ≈(A[:, :, i] * z .+ q[:, i], [0.0, 0.0]; atol=1e-3),
-                    enumerate(eachcol(sol.z)))
+                @test all(z -> ≈(A * z .+ q, [0.0, 0.0]; atol=1e-3), eachcol(sol.u))
             end
         end
 
