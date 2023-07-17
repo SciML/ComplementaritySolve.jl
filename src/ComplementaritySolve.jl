@@ -43,6 +43,7 @@ include("utils.jl")
 include("problems/complementarity_problems.jl")
 include("problems/complementarity_systems.jl")
 
+include("algorithms/solve.jl")
 include("algorithms/generic.jl")
 include("algorithms/lcp/nonlinear_reformulation.jl")
 include("algorithms/lcp/bokhoven_iterative.jl")
