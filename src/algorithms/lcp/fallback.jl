@@ -17,7 +17,7 @@
     return_codes = Vector{ReturnCode.T}(undef, size(prob.u0, 2))
     return_codes[1] = sol_first.retcode
 
-    Threads.@threads for i in 1:size(prob.u0, 2)
+    Threads.@threads :static for i in 1:size(prob.u0, 2)
         sol = solve(LinearComplementarityProblem{iip}(prob.M[:, :, i],
                 prob.q[:, i],
                 prob.u0[:, i]),
