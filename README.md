@@ -27,6 +27,7 @@ Add a specific version of `SimpleNonlinearSolve.jl` with
 * Nonlinear Complementarity Problems (NCP)
 * Mixed Complementarity Problems (MCP)
   * Nonlinear Reformulation
+  * PATH Solver (via [PATHSolver.jl](https://github.com/chkwon/PATHSolver.jl))
 
 ## Usage
 
