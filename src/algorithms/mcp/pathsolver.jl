@@ -1,35 +1,28 @@
-struct PathSolverAlgorithm <: AbstractComplementarityAlgorithm end
+struct PATHSolverAlgorithm <: AbstractComplementarityAlgorithm end
 
-function solve(prob::MixedComplementarityProblem{false},
-    alg::PathSolverAlgorithm;
-    kwargs...)
-    func, u0, lb, ub, θ = prob.f, prob.u0, prob.lb, prob.ub, prob.p
+function solve(prob::MCP{iip}, alg::PATHSolverAlgorithm; kwargs...) where {iip}
+    (; f, u0, lb, ub, p) = prob
 
-    if (eltype(u0) == Float32 ||
-        eltype(lb) == Float32 ||
-        eltype(lb) == Float32 ||
-        eltype(p) == Float32)
-        @warn "PATHSolver doesn't support Float32"
-        u0 = Float64.(u0)
-        lb = Float64.(lb)
-        ub = Float64.(ub)
-        θ = Float64.(θ)
+    (u0, lb, ub, p) = map((u0, lb, ub, p)) do x
+        eltype(x) == Float64 && return x
+        @warn "PATHSolver doesn't support Non Float64 inputs. Converted them to Float64" maxlog=1
+        return Float64.(x)
     end
 
+    fₚ = iip ? (y, x) -> f(y, x, p) : Base.Fix2(f, p)
     n = length(u0)
 
-    function F(n, z, f)
-        f .= func(z, θ)
+    function F!(n, z, y)
+        iip ? fₚ(y, z) : (y .= fₚ(z))
         return Cint(0)
     end
 
-    function J(n, nnz, z, col, len, row, data)
-        if n <= 100
-            J = ForwardDiff.jacobian(z -> func(z, θ), z)
+    function J!(n, nnz, z, col, len, row, data)
+        if !iip
+            J = (n ≤ 100 ? ForwardDiff.jacobian : Zygote.jacobian)(fₚ, z)
         else
-            J = Zygote.jacobian(z -> func(z, θ), z)
+            J = ForwardDiff.jacobian(fₚ, similar(z, n), z)
         end
-
         i = 1
         for c in 1:n
             col[c], len[c] = i, 0
@@ -44,6 +37,26 @@ function solve(prob::MixedComplementarityProblem{false},
         return Cint(0)
     end
 
-    status, z, info = PATHSolver.solve_mcp(F, J, lb, ub, u0)
-    return MixedComplementaritySolution(z, info.residual, prob, alg)
+    status, z, info = PATHSolver.solve_mcp(F!, J!, lb, ub, u0; silent=true)
+    return MixedComplementaritySolution(z,
+        info.residual,
+        prob,
+        alg,
+        __pathsolver_status_to_return_code(status))
+end
+
+function __pathsolver_status_to_return_code(status)
+    if status == PATHSolver.MCP_Solved
+        return ReturnCode.Success
+    elseif status == PATHSolver.MCP_NoProgress
+        return ReturnCode.Terminated
+    elseif status == PATHSolver.MCP_MajorIterationLimit
+        return ReturnCode.MaxIters
+    elseif status == PATHSolver.MCP_MinorIterationLimit
+        return ReturnCode.MaxIters
+    elseif status == PATHSolver.MCP_TimeLimit
+        return ReturnCode.MaxTime
+    else  # Errors. Currently returning a random thing
+        return ReturnCode.Infeasible
+    end
 end

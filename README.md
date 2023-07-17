@@ -22,7 +22,7 @@ Add a specific version of `SimpleNonlinearSolve.jl` with
     * PSOR
     * PGS
     * RPGS
-  * Bokhoven Iterative Method
+  * Bokhoven Iterative Method (PSD `M` / monotone LCP)
 * Mixed Linear Complementarity Problems (MLCP)
 * Nonlinear Complementarity Problems (NCP)
 * Mixed Complementarity Problems (MCP)

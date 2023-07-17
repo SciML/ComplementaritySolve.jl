@@ -49,40 +49,18 @@ end
     ::Val{batched},
     ∂z,
     z,
-    ∂w,
-    w,
     ∂M,
     M,
     ∂q,
     q) where {iip, batched}
-    ∂w === nothing && ∂z === nothing && return
-
-    if ∂w !== nothing
-        sum!(∂q, ∂w)
-
-        if batched
-            ∂w = reshape(∂w, size(∂w, 1), 1, size(∂w, 2))
-            batched_mul!(∂M, ∂w, reshape(z, 1, size(z, 1), size(z, 2)))
-        else
-            mul!(∂M, ∂w, z')
-        end
-
-        ∂z_ = batched ? batched_transpose(M) ⊠ ∂w : M' * ∂w
-        if ∂z === nothing
-            ∂z = ∂z_
-        else
-            batched && (∂z = reshape(∂z, size(∂z, 1), 1, size(∂z, 2)))
-            if ArrayInterfaceCore.can_setindex(∂z)
-                ∂z .+= ∂z_
-            else
-                ∂z = ∂z .+ ∂z_
-            end
-        end
-    end
+    ∂z === nothing && return
 
     (L, N), Lₘ = __get_lcp_dimensions(z, M)
 
-    u₋, v₋ = w, z
+    u₋ = batched ? (batched_mul(M, reshape(z, size(z, 1), 1, :))[:, 1, :] .+ q) :
+         (M * z + q)
+    v₋ = z
+
     den = @. inv(√(u₋^2 + v₋^2))
     ∂ϕ₋∂u₋ = __diagonal(@. 1 - u₋ * den)
     ∂ϕ₋∂v₋ = __diagonal(@. 1 - v₋ * den)
@@ -109,10 +87,8 @@ function CRC.rrule(::typeof(solve),
         ∇linear_complementarity_problem!(sensealg,
             Val(iip),
             Val(batched),
-            __nothingify(Δ.z),
-            sol.z,
-            __nothingify(Δ.w),
-            sol.w,
+            __nothingify(Δ.u),
+            sol.u,
             ∂M,
             prob.M,
             ∂q,

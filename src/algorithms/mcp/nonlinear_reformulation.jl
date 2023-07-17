@@ -12,7 +12,7 @@ for method in (:minmax, :smooth)
         _prob = NonlinearProblem(NonlinearFunction{true}(f!), prob.u0, prob.p)
         sol = solve(_prob, alg.nlsolver; kwargs...)
 
-        return MixedComplementaritySolution(sol.u, sol.resid, prob, alg)
+        return MixedComplementaritySolution(sol.u, sol.resid, prob, alg, sol.retcode)
     end
 
     @eval function solve(prob::MixedComplementarityProblem{false}, alg::$algType; kwargs...)
@@ -21,6 +21,6 @@ for method in (:minmax, :smooth)
         _prob = NonlinearProblem(NonlinearFunction{false}(f), prob.u0, prob.p)
         sol = solve(_prob, alg.nlsolver; kwargs...)
 
-        return MixedComplementaritySolution(sol.u, sol.resid, prob, alg)
+        return MixedComplementaritySolution(sol.u, sol.resid, prob, alg, sol.retcode)
     end
 end

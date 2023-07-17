@@ -1,31 +1,25 @@
 abstract type AbstractComplementaritySolution end
-abstract type AbstractLinearComplementaritySolution end
+abstract type AbstractLinearComplementaritySolution <: AbstractComplementaritySolution end
 
-function Base.show(io::IO, sol::AbstractLinearComplementaritySolution)
-    println(io, "Linear Complementarity Solution")
-    println(io, "    z: ", sol.z)
-    println(io, "    w: ", sol.w)
-    return
+function Base.show(io::IO, m::MIME"text/plain", A::AbstractComplementaritySolution)
+    println(io, string(nameof(typeof(A)), " with retcode: ", A.retcode))
+    print(io, "u: ")
+    show(io, m, A.u)
+    return nothing
 end
 
 @concrete struct LinearComplementaritySolution <: AbstractLinearComplementaritySolution
-    z
-    w
-    resid
+    u
+    residual
     prob
     alg
+    retcode::ReturnCode.T
 end
 
 @concrete struct MixedComplementaritySolution <: AbstractComplementaritySolution
     u
-    resid
+    residual
     prob
     alg
-end
-
-function Base.show(io::IO, sol::MixedComplementaritySolution)
-    println(io, "Mixed Complementarity Solution")
-    println(io, "    residual: ", sol.resid)
-    println(io, "    u: ", sol.u)
-    return
+    retcode::ReturnCode.T
 end

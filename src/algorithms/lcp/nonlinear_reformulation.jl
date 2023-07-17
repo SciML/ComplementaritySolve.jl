@@ -21,13 +21,9 @@ for method in (:minmax, :smooth), batched in (false, true)
         sol = solve(_prob, alg.nlsolver; kwargs...)
 
         z = sol.u
-        w = iip ? f(similar(z), z, θ) : f(z, θ)
 
-        if $(batched)
-            z = dropdims(z; dims=2)
-            w = dropdims(w; dims=2)
-        end
+        $(batched) && (z = dropdims(z; dims=2))
 
-        return LinearComplementaritySolution(z, w, sol.resid, prob, alg)
+        return LinearComplementaritySolution(z, sol.resid, prob, alg, sol.retcode)
     end
 end

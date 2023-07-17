@@ -12,7 +12,7 @@ function solve(prob::LinearComplementaritySystem{sstate},
 
     function dxdt(x, p, t)
         lcp_sol = solve(LCP(F, E * x .+ c, λ0), alg.lcp_solver; lcp_kwargs..., kwargs...)
-        λ = lcp_sol.z
+        λ = lcp_sol.u
         u_ = controller(x, λ, p, t)
         return A * x .+ B * u_ .+ D * λ .+ a
     end
