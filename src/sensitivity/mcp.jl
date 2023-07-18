@@ -6,16 +6,28 @@ MixedComplementarityAdjoint() = MixedComplementarityAdjoint(nothing)
 
 @truncate_stacktrace MixedComplementarityAdjoint
 
-@views function ∇mixed_complementarity_problem!(cfg::RuleConfig{>:HasReverseMode},
-    alg::MixedComplementarityAdjoint,
-    ∂u,
-    u,
-    ∂p,
-    p,
-    f,
-    lb,
-    ub)
-    ∂u === nothing && return
+function __fixed_vecjac_operator(f, y, p, A₁, A₂)
+    input, pb_f = Zygote.pullback(x -> f(x, p), y)
+    output = only(pb_f(input))
+    function f_operator!(du, u, p, t)
+        λ = reshape(u, size(input))
+        du .= vec(only(pb_f(A₁ * λ)) .+ A₂ * λ)
+        return du
+    end
+    return FunctionOperator(f_operator!, vec(input), vec(output))
+end
+
+@views function __solve_adjoint(prob::MixedComplementarityProblem{false},
+    sensealg::MixedComplementarityAdjoint,
+    sol,
+    ∂sol,
+    u0,
+    p;
+    kwargs...)
+    (__notangent(∂sol) || __notangent(∂sol.u)) && return (∂∅,)
+
+    (; f, lb, ub) = prob
+    u, ∂u = sol.u, ∂sol.u
 
     fᵤ = f(u, p)
     ∂ϕ₊∂u₊, ∂ϕ₊∂v₊ = Jϕ₊(fᵤ, u, ub)
@@ -32,47 +44,10 @@ MixedComplementarityAdjoint() = MixedComplementarityAdjoint(nothing)
         ##       over the FunctionOperator
         A = __fixed_vecjac_operator(f, u, p, A₁, A₂)
     end
-    λ = solve(LinearProblem(A, __unfillarray(∂u)), alg.linsolve).u
+    λ = solve(LinearProblem(A, __unfillarray(∂u)), sensealg.linsolve).u
 
     _, pb_f = Zygote.pullback(Base.Fix1(f, u), p)
-    vec(∂p) .= -vec(only(pb_f((A₁ * λ)')))
+    ∂p = -reshape(vec(only(pb_f((A₁ * λ)'))), size(p))
 
-    return
-end
-
-function CRC.rrule(cfg::RuleConfig{>:HasReverseMode},
-    ::typeof(solve),
-    prob::MixedComplementarityProblem{false},
-    alg;
-    sensealg=MixedComplementarityAdjoint(),
-    kwargs...)
-    sol = solve(prob, alg; kwargs...)
-
-    function ∇mcpsolve(Δ)
-        ∂p = zero(prob.p)
-        ∇mixed_complementarity_problem!(cfg,
-            sensealg,
-            __nothingify(Δ.u),
-            sol.u,
-            ∂p,
-            prob.p,
-            prob.f,
-            prob.lb,
-            prob.ub)
-        ∂prob = (; p=∂p, u0=∂∅, lb=∂∅, ub=∂∅, f=∂∅)
-        return ∂∅, ∂prob, ∂∅
-    end
-
-    return sol, ∇mcpsolve
-end
-
-function __fixed_vecjac_operator(f, y, p, A₁, A₂)
-    input, pb_f = Zygote.pullback(x -> f(x, p), y)
-    output = only(pb_f(input))
-    function f_operator!(du, u, p, t)
-        λ = reshape(u, size(input))
-        du .= vec(only(pb_f(A₁ * λ)) .+ A₂ * λ)
-        return du
-    end
-    return FunctionOperator(f_operator!, vec(input), vec(output))
+    return (∂p,)
 end

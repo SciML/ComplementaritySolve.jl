@@ -7,7 +7,7 @@ function solve(prob::AbstractComplementarityProblem,
     u0 = u0 !== nothing ? u0 : prob.u0
     p = p !== nothing ? p : prob.p
     sensealg = sensealg === nothing ? __default_sensealg(prob) : sensealg
-    solver, args_ = length(args) == 0 ? (__default_solver(prob), ()) : Iterators.peel(args)
+    solver, args_ = __solver_and_args(prob, args...)
     return __solve(prob, sensealg, solver, u0, p, args_...; kwargs...)
 end
 
@@ -22,12 +22,12 @@ function solve(prob::Union{LinearComplementarityProblem, MixedLinearComplementar
     M = M !== nothing ? M : prob.M
     q = q !== nothing ? q : prob.q
     sensealg = sensealg === nothing ? __default_sensealg(prob) : sensealg
-    solver, args_ = if length(args) == 0
-        __default_solver(prob), ()
-    else
-        first(args), args[2:end]
-    end
+    solver, args_ = __solver_and_args(prob, args...)
     return __solve(prob, sensealg, solver, u0, M, q, args_...; kwargs...)
+end
+
+function __solver_and_args(prob, args...)
+    return length(args) == 0 ? (__default_solver(prob), ()) : (first(args), args[2:end])
 end
 
 function __default_sensealg(::T) where {T <: AbstractComplementarityProblem}
@@ -39,7 +39,7 @@ __default_sensealg(::LinearComplementarityProblem) = LinearComplementarityAdjoin
 __default_sensealg(::MixedComplementarityProblem) = MixedComplementarityAdjoint()
 
 function __default_solver(::T) where {T <: AbstractComplementarityProblem}
-    error("No default solver for type $(T). Please specify a solver.")
+    return error("No default solver for type $(T). Please specify a solver.")
 end
 __default_solver(::LinearComplementarityProblem) = NonlinearReformulation()
 __default_solver(::MixedComplementarityProblem) = NonlinearReformulation()

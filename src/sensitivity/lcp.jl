@@ -38,7 +38,6 @@ end
     (__notangent(∂sol) || __notangent(∂sol.u)) && return (∂∅, ∂∅)
 
     u, ∂u = sol.u, ∂sol.u
-    ∂M, ∂q = zero(M), zero(q)
 
     (L, N), Lₘ = __lcp_dims(u, M)
 
@@ -52,8 +51,8 @@ end
 
     ∂Mq = __∇lcp(u, ∂u, ∂ϕ₋∂u₋, M, ∂ϕ₋∂v₋, L, Lₘ, sensealg.linsolve)
 
-    vec(∂M) .+= vec(selectdim(∂Mq, 1, 1:Lₘ))
-    vec(∂q) .+= vec(selectdim(∂Mq, 1, (Lₘ + 1):size(∂Mq, 1)))
+    ∂M = reshape(vec(selectdim(∂Mq, 1, 1:Lₘ)), size(M))
+    ∂q = reshape(vec(selectdim(∂Mq, 1, (Lₘ + 1):size(∂Mq, 1))), size(q))
 
     return (∂M, ∂q)
 end

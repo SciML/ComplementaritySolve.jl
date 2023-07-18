@@ -1,11 +1,14 @@
 struct PATHSolverAlgorithm <: AbstractComplementarityAlgorithm end
 
-function solve(prob::MCP{iip}, alg::PATHSolverAlgorithm; kwargs...) where {iip}
-    (; f, u0, lb, ub, p) = prob
+function __solve(prob::MCP{iip}, alg::PATHSolverAlgorithm, u0, p; verbose::Bool=true, kwargs...) where {iip}
+    (; f, lb, ub) = prob
 
     (u0, lb, ub, p) = map((u0, lb, ub, p)) do x
         eltype(x) == Float64 && return x
-        @warn "PATHSolver doesn't support Non Float64 inputs. Converted them to Float64" maxlog=1
+        if verbose
+            @warn "PATHSolver doesn't support Non Float64 ($(eltype(x))) inputs. Converted \
+                   them to Float64" maxlog=1
+        end
         return Float64.(x)
     end
 
