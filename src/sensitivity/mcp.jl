@@ -1,5 +1,4 @@
-## FIXME: Support batching for the solvers
-@concrete struct MixedComplementarityAdjoint
+@concrete struct MixedComplementarityAdjoint <: AbstractComplementaritySensitivityAlgorithm
     linsolve
 end
 

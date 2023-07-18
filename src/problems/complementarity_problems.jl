@@ -78,46 +78,46 @@ end
 
 const LCP = LinearComplementarityProblem
 
-function (prob::LCP{iip, batched})() where {iip, batched}
+function (prob::LCP{iip, batched})(u0=prob.u0, M=prob.M, q=prob.q) where {iip, batched}
     f, u0 = if iip
         if batched
             function f_batched!(out, u, θ)
-                M = reshape(view(θ, 1:length(prob.M)), size(prob.M))
-                q = reshape(view(θ, (length(prob.M) + 1):length(θ)), size(prob.q, 1), 1, :)
+                M = reshape(view(θ, 1:length(M)), size(M))
+                q = reshape(view(θ, (length(M) + 1):length(θ)), size(q, 1), 1, :)
                 out .= q
                 batched_mul!(out, M, reshape(u, size(u, 1), 1, :), true, true)
                 return out
             end
-            f_batched!, reshape(prob.u0, size(prob.u0, 1), 1, :)
+            f_batched!, reshape(u0, size(u0, 1), 1, :)
         else
             function f_unbatched!(out, u, θ)
-                M = reshape(view(θ, 1:length(prob.M)), size(prob.M))
-                q = view(θ, (length(prob.M) + 1):length(θ))
+                M = reshape(view(θ, 1:length(M)), size(M))
+                q = view(θ, (length(M) + 1):length(θ))
                 out .= q
                 mul!(out, M, u, true, true)
                 return out
             end
-            f_unbatched!, prob.u0
+            f_unbatched!, u0
         end
     else
         if batched
             function f_batched(u, θ)
-                M = reshape(view(θ, 1:length(prob.M)), size(prob.M))
-                q = reshape(view(θ, (length(prob.M) + 1):length(θ)), size(prob.q, 1), 1, :)
+                M = reshape(view(θ, 1:length(M)), size(M))
+                q = reshape(view(θ, (length(M) + 1):length(θ)), size(q, 1), 1, :)
                 return M ⊠ u .+ q
             end
-            f_batched, reshape(prob.u0, size(prob.u0, 1), 1, :)
+            f_batched, reshape(u0, size(u0, 1), 1, :)
         else
             function f_unbatched(u, θ)
-                M = reshape(view(θ, 1:length(prob.M)), size(prob.M))
-                q = view(θ, (length(prob.M) + 1):length(θ))
+                M = reshape(view(θ, 1:length(M)), size(M))
+                q = view(θ, (length(M) + 1):length(θ))
                 return M * u .+ q
             end
-            f_unbatched, prob.u0
+            f_unbatched, u0
         end
     end
 
-    θ = vcat(vec(prob.M), vec(prob.q))
+    θ = vcat(vec(M), vec(q))
 
     return f, u0, θ
 end

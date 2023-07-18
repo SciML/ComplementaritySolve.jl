@@ -37,6 +37,7 @@ ArrayInterfaceCore.can_setindex(::Zygote.OneElement) = false
 
 abstract type AbstractComplementarityAlgorithm end
 abstract type AbstractComplementaritySystemAlgorithm end
+abstract type AbstractComplementaritySensitivityAlgorithm end
 
 include("utils.jl")
 

@@ -8,13 +8,15 @@ BokhovenIterativeAlgorithm() = BokhovenIterativeAlgorithm(NewtonRaphson())
 @truncate_stacktrace BokhovenIterativeAlgorithm
 
 ## NOTE: It is a steady state problem so we could in-principle use an ODE Solver
-function solve(prob::LinearComplementarityProblem{iip, false},
+function __solve(prob::LinearComplementarityProblem{iip, false},
     alg::BokhovenIterativeAlgorithm,
-    args...;
+    u0,
+    M,
+    q;
     kwargs...) where {iip}
-    A = pinv(I + prob.M)
-    B = A * (I - prob.M)
-    b = -A * prob.q
+    A = pinv(I + M)
+    B = A * (I - M)
+    b = -A * q
 
     θ = vcat(vec(B), b)
 
@@ -28,11 +30,11 @@ function solve(prob::LinearComplementarityProblem{iip, false},
             return residual
         end
 
-        _prob = NonlinearProblem(NonlinearFunction{true}(objective!), prob.u0, θ)
+        _prob = NonlinearProblem(NonlinearFunction{true}(objective!), u0, θ)
     else
         objective(u, θ) = _get_B(θ) * abs.(u) .+ _get_b(θ) .- u
 
-        _prob = NonlinearProblem(NonlinearFunction{false}(objective), prob.u0, θ)
+        _prob = NonlinearProblem(NonlinearFunction{false}(objective), u0, θ)
     end
     sol = solve(_prob, alg.nlsolver; kwargs...)
 

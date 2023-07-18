@@ -1,28 +1,27 @@
-@views function solve(prob::LinearComplementarityProblem{iip, true},
-    solver::AbstractComplementarityAlgorithm;
+@views function __solve(prob::LinearComplementarityProblem{iip, true},
+    solver::AbstractComplementarityAlgorithm,
+    u0,
+    M,
+    q;
+    verbose::Bool=true,
     kwargs...) where {iip}
-    @warn "Solver: $(nameof(typeof(solver))) doesn't support batched problems. Falling \
-           back to iterating over the batch dimension. This is going to be slow!!" maxlog=1
+    if verbose
+        @warn "Solver: $(nameof(typeof(solver))) doesn't support batched problems. Falling \
+            back to iterating over the batch dimension. This is going to be slow!!" maxlog=1
+    end
     # Do the first solve to get the types
-    sol_first = solve(LinearComplementarityProblem{iip}(prob.M[:, :, 1],
-            prob.q[:, 1],
-            prob.u0[:, 1]),
-        solver;
-        kwargs...)
+    𝒫 = LinearComplementarityProblem{iip, false}(nothing, nothing, nothing)
+    sol_first = __solve(𝒫, solver, u0[:, 1], M[:, :, 1], q[:, 1]; kwargs...)
 
-    us = similar(sol_first.u, length(sol_first.u), size(prob.u0, 2))
+    us = similar(sol_first.u, length(sol_first.u), size(u0, 2))
     # Residual might be nothing
     residual = sol_first.residual === nothing ? nothing :
-               similar(sol_first.residual, length(sol_first.residual), size(prob.u0, 2))
-    return_codes = Vector{ReturnCode.T}(undef, size(prob.u0, 2))
+               similar(sol_first.residual, length(sol_first.residual), size(u0, 2))
+    return_codes = Vector{ReturnCode.T}(undef, size(u0, 2))
     return_codes[1] = sol_first.retcode
 
-    Threads.@threads :static for i in 1:size(prob.u0, 2)
-        sol = solve(LinearComplementarityProblem{iip}(prob.M[:, :, i],
-                prob.q[:, i],
-                prob.u0[:, i]),
-            solver;
-            kwargs...)
+    Threads.@threads :static for i in 1:size(u0, 2)
+        sol = __solve(𝒫, solver, u0[:, i], M[:, :, i], q[:, i]; kwargs...)
         us[:, i] .= sol.u
         residual !== nothing && (residual[:, i] .= sol.residual)
         return_codes[i] = sol.retcode
