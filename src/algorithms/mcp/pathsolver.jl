@@ -45,7 +45,7 @@ function __solve(prob::MCP{iip},
         return Cint(0)
     end
 
-    status, z, info = PATHSolver.solve_mcp(F!, J!, lb, ub, u0; silent=true)
+    status, z, info = PATHSolver.solve_mcp(F!, J!, lb, ub, u0; silent=!verbose, kwargs...)
     return MixedComplementaritySolution(z,
         info.residual,
         prob,

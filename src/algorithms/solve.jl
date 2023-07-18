@@ -11,7 +11,7 @@ function solve(prob::AbstractComplementarityProblem,
     return __solve(prob, sensealg, solver, u0, p, args_...; kwargs...)
 end
 
-function solve(prob::Union{LinearComplementarityProblem, MixedLinearComplementarityProblem},
+function solve(prob::AbstractLinearComplementarityProblem,
     args...;
     sensealg=nothing,
     u0=nothing,

@@ -1,5 +1,6 @@
 using ComplementaritySolve
-using ComponentArrays,
+using BenchmarkTools,
+    ComponentArrays,
     FiniteDifferences,
     ForwardDiff,
     NonlinearSolve,
@@ -7,6 +8,7 @@ using ComponentArrays,
     StableRNGs,
     Test,
     Zygote
+import ParametricMCPs
 
 rng = StableRNG(0)
 
@@ -38,7 +40,7 @@ rng = StableRNG(0)
                 @testset "Solver: $(typeof(solver))" for solver in (PATHSolverAlgorithm(),
                     NonlinearReformulation(:smooth, NewtonRaphson()),
                     NonlinearReformulation(:minmax, NewtonRaphson()))
-                    sol = solve(prob, solver)
+                    sol = solve(prob, solver; verbose=false)
 
                     @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
                 end
@@ -48,7 +50,10 @@ rng = StableRNG(0)
         @testset "Adjoint Tests" begin
             function loss_function(θ, solver)
                 prob = MCP(f, u0, lower_bound, upper_bound, θ)
-                sol = solve(prob, solver; sensealg=MixedComplementarityAdjoint())
+                sol = solve(prob,
+                    solver;
+                    sensealg=MixedComplementarityAdjoint(),
+                    verbose=false)
                 return sum(sol.u)
             end
 
@@ -68,4 +73,6 @@ rng = StableRNG(0)
             @test ∂θ_zygote≈∂θ_finitediff atol=1e-3 rtol=1e-3
         end
     end
+
+    @testset "Benchmarking against ParametricMCPs.jl" begin end
 end

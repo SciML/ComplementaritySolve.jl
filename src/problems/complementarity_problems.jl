@@ -1,10 +1,19 @@
-abstract type AbstractComplementarityProblem{iip, batched} end
+abstract type AbstractComplementarityProblem{iip} end
+abstract type AbstractLinearComplementarityProblem{iip, batched} <:
+              AbstractComplementarityProblem{iip} end
+abstract type AbstractNonlinearComplementarityProblem{iip} <:
+              AbstractComplementarityProblem{iip} end
 
 SciMLBase.isinplace(::AbstractComplementarityProblem{iip}) where {iip} = iip
-isbatched(::AbstractComplementarityProblem{iip, batched}) where {iip, batched} = batched
+function isbatched(::AbstractLinearComplementarityProblem{
+    iip,
+    batched,
+}) where {iip, batched}
+    return batched
+end
 
 @concrete struct LinearComplementarityProblem{iip, batched} <:
-                 AbstractComplementarityProblem{iip, batched}
+                 AbstractLinearComplementarityProblem{iip, batched}
     M
     q
     u0
@@ -123,7 +132,7 @@ function (prob::LCP{iip, batched})(u0=prob.u0, M=prob.M, q=prob.q) where {iip, b
 end
 
 @concrete struct MixedLinearComplementarityProblem{iip, batched} <:
-                 AbstractComplementarityProblem{iip, batched}
+                 AbstractLinearComplementarityProblem{iip, batched}
     M
     q
     u0
@@ -143,7 +152,7 @@ function MLCP(prob::LCP{iip, batched}) where {iip, batched}
 end
 
 @concrete struct NonlinearComplementarityProblem{iip, F <: Function} <:
-                 AbstractComplementarityProblem{iip, false}
+                 AbstractNonlinearComplementarityProblem{iip}
     f::F
     u0
     p
@@ -153,13 +162,10 @@ end
 
 const NCP = NonlinearComplementarityProblem
 
-function NCP(prob::LCP{iip, batched}) where {iip, batched}
-    f, u0, θ = prob()
-    return NCP{iip, batched}(f, u0, θ)
-end
+NCP(prob::LCP{iip}) where {iip} = NCP{iip}(prob()...)
 
-@concrete struct MixedComplementarityProblem{iip, batched, F <: Function} <:
-                 AbstractComplementarityProblem{iip, batched}
+@concrete struct MixedComplementarityProblem{iip, F <: Function} <:
+                 AbstractNonlinearComplementarityProblem{iip}
     f::F
     u0
     lb
@@ -173,16 +179,11 @@ const MCP = MixedComplementarityProblem
 
 MCP(prob::LCP) = MCP(NCP(prob))
 
-function MCP(prob::NCP{iip, batched}) where {iip, batched}
+function MCP(prob::NCP{iip}) where {iip}
     lb = zero(prob.u0)
     ub = similar(prob.u0)
     fill!(ub, eltype(prob.u0)(Inf))
-    return MCP{iip, batched}(prob.f, prob.u0, lb, ub, prob.p)
+    return MCP{iip}(prob.f, prob.u0, lb, ub, prob.p)
 end
 
 MCP(f, u0, lb, ub, p) = MCP{SciMLBase.isinplace(f, 3)}(f, u0, lb, ub, p)
-
-function MCP{iip}(f, u0, lb, ub, p) where {iip}
-    batched = ndims(u0) ≥ 2 # Assume batched in this case
-    return MCP{iip, batched}(f, u0, lb, ub, p)
-end
