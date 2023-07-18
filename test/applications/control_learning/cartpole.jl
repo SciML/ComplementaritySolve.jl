@@ -1,7 +1,6 @@
 using Zygote,
     LinearAlgebra,
     SimpleNonlinearSolve,
-    TruncatedStacktraces,
     OrdinaryDiffEq,
     Plots,
     Optimization,
