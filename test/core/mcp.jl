@@ -72,7 +72,59 @@ rng = StableRNG(0)
             @test ∂θ_zygote≈∂θ_forwarddiff atol=1e-3 rtol=1e-3
             @test ∂θ_zygote≈∂θ_finitediff atol=1e-3 rtol=1e-3
         end
-    end
 
-    @testset "Benchmarking against ParametricMCPs.jl" begin end
+        @testset "Benchmarking against ParametricMCPs.jl" begin
+            u0 = randn(rng, Float64, 4)
+            lb = Float64[-Inf, -Inf, 0, 0]
+            ub = Float64[Inf, Inf, Inf, Inf]
+            θ = [2.0, -3.0]
+
+            prob_oop = MCP(f, u0, lb, ub, θ)
+            function loss_function_oop(θ, solver)
+                sol = solve(prob_oop, solver; p=θ, verbose=false)
+                return sum(abs2, sol.u)
+            end
+
+            prob_iip = MCP(f!, u0, lb, ub, θ)
+            function loss_function_iip(θ, solver)
+                sol = solve(prob_iip, solver; p=θ, verbose=false)
+                return sum(abs2, sol.u)
+            end
+
+            prob_ext = ParametricMCPs.ParametricMCP(f, lb, ub, length(θ))
+            function loss_function_parametric_mcp(θ)
+                sol = ParametricMCPs.solve(prob_ext, θ)
+                return sum(abs2, sol.z)
+            end
+
+            function loss_function_parametric_mcp_total(θ)
+                prob = Zygote.@ignore ParametricMCPs.ParametricMCP(f, lb, ub, length(θ))
+                sol = ParametricMCPs.solve(prob, θ)
+                return sum(abs2, sol.z)
+            end
+
+            loss_function_path_oop = Base.Fix2(loss_function_oop, PATHSolverAlgorithm())
+            loss_function_nr_oop = Base.Fix2(loss_function_oop,
+                NonlinearReformulation(:smooth, NewtonRaphson()))
+            loss_function_path_iip = Base.Fix2(loss_function_iip, PATHSolverAlgorithm())
+            loss_function_nr_iip = Base.Fix2(loss_function_iip,
+                NonlinearReformulation(:smooth, NewtonRaphson()))
+
+            for loss_function in (loss_function_path_oop,
+                loss_function_nr_oop,
+                loss_function_path_iip,
+                loss_function_nr_iip)
+                t₁ = @belapsed $loss_function($θ)
+                t₂ = @belapsed only(Zygote.gradient($loss_function, $θ))
+                @info "ComplementaritySolve.jl: $(loss_function)" fwd_time=t₁ with_adjoint_time=t₂
+            end
+
+            for loss_function in (loss_function_parametric_mcp,
+                loss_function_parametric_mcp_total)
+                t₁ = @belapsed $loss_function($θ)
+                t₂ = @belapsed only(Zygote.gradient($loss_function, $θ))
+                @info "ParametricMCPs.jl: $(loss_function)" fwd_time=t₁ with_adjoint_time=t₂
+            end
+        end
+    end
 end

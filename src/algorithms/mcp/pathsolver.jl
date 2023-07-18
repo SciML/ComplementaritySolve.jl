@@ -1,5 +1,7 @@
 struct PATHSolverAlgorithm <: AbstractComplementarityAlgorithm end
 
+# TODO: We might want to exploit sparsity using Symbolics.jl. Else PATH Solver won't be
+#       competitive with other solvers. See ParametricMCPs.jl for an example.
 function __solve(prob::MCP{iip},
     alg::PATHSolverAlgorithm,
     u0,
