@@ -2,9 +2,8 @@ using Zygote,
     LinearAlgebra,
     SimpleNonlinearSolve,
     TruncatedStacktraces,
-    DifferentialEquations,
+    OrdinaryDiffEq,
     Plots,
-    Distributions,
     Optimization,
     OptimizationOptimJL,
     OptimizationOptimisers,
@@ -42,7 +41,7 @@ c = 0.0
 #steady state
 x_steady = [0.0, 0.0, 0.0, 0.0]
 #initial pos
-r_x = rand(Uniform(-1, 1), 3)
+r_x = rand([-1, 1], 3)
 x0 = [10 * r_x[1], 0.0, r_x[2], r_x[3], 0.0, 0.0, 0.0, 0.0]
 
 #extract dimension information
@@ -111,10 +110,10 @@ end
 
     function callback(θ, loss)
         iter += 1
-        if iter % 100 == 1 || loss ≤ 0.01
+        if iter % 100 == 1 || loss ≤ 0.1
             @info "Parameter Estimation with datapoints" iter=iter loss=loss
         end
-        return loss ≤ 0.01
+        return loss ≤ 0.1
     end
 
     adtype = Optimization.AutoZygote()
@@ -138,5 +137,5 @@ end
     θ_estimated = result_neurallcs2.u
 
     # Convergence Test
-    @test loss_f(θ_estimated) ≤ 0.5
+    @test loss_f(θ_estimated) ≤ 0.1
 end
