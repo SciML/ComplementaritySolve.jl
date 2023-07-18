@@ -32,3 +32,11 @@ Add a specific version of `SimpleNonlinearSolve.jl` with
 ## Usage
 
 More details are WIP. Examples can be found in `test` directory.
+
+## Current Unique Features of ComplementaritySolve.jl:
+
+* Supports batched problems for LCPs.
+* Can use any arbitrary forward solver. If Siconos is faster, we can use that solver, and we will still be able to give gradients to the end user.
+* Most solvers should work on GPUs OOTB.
+* Scalable Adjoint computation using Linear Solve trick rather than computing explicit Jacobians like ParametricMCPs.jl.
+  * If solver thinks problem is small enough, we still construct the Jacobian.
