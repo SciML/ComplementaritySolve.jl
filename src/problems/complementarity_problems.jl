@@ -21,37 +21,28 @@ end
 
 function LinearComplementarityProblem{iip}(M, q, u0=nothing) where {iip}
     # By default, set iip to true since that is faster
-    # For AD support, we need to set iip to false
     if u0 !== nothing && ndims(u0) == 2 && ndims(M) == 2 && ndims(q) == 1
         # If u0 is batched while problem is not, then reshape the problem
-        M = repeat(reshape(M, size(M)..., 1); outer=(1, 1, size(u0, 2)))
-        q = repeat(reshape(q, length(q), 1); outer=(1, size(u0, 2)))
+        M = reshape(M, size(M)..., 1)
+        q = reshape(q, length(q), 1)
     end
+
+    if ndims(M) == 3 && ndims(q) == 1
+        q = reshape(q, length(q), 1)
+    elseif ndims(M) == 2 && ndims(q) == 2
+        M = reshape(M, size(M)..., 1)
+    end
+
     batched = ndims(M) == 3
+    batched && (batch_size = __check_correct_batching(M, q))
+
     if u0 === nothing
-        u0 = zero(q)
-    elseif batched && ndims(u0) == 1
-        @warn "Incorrect batched version specification for `u0`. Reshaping to \
-            ($(length(u0)), 1)."
-        u0 = reshape(u0, :, 1)
+        u0 = similar(q, batched ? (size(q, 1), batch_size) : size(q))
+        fill!(u0, 0)
+    elseif batched
+        @assert size(u0, 2) == batch_size
     end
-    if batched
-        if !(ndims(q) == ndims(u0) == 2)
-            throw(ArgumentError("Incorrect batched version specification: \
-                ndims(M) = 3, ndims(q) = $(ndims(q)), \
-                ndims(u0) = $(ndims(u0))!"))
-        end
-        if size(u0, ndims(u0)) != size(q, ndims(q)) ||
-           size(q, ndims(q)) != size(M, ndims(M)) ||
-           size(u0, ndims(u0)) != size(M, ndims(M))
-            throw(ArgumentError("Batch Sizes are inconsistent across M, q, u0!"))
-        end
-    else
-        if ndims(q) != 1 || ndims(u0) != 1
-            throw(ArgumentError("`M` is not batched, but `q` ($(ndims(q))) or `u0` \
-                                 ($(ndims(u0))) are!"))
-        end
-    end
+
     return LinearComplementarityProblem{iip, batched}(M, q, u0)
 end
 
@@ -69,13 +60,16 @@ for iip in (true, false)
                 ∂M = ∂∅
                 ∂q = ∂∅
             else
-                if isbatched(prob) && ndims(M) != ndims(Δ.M) && ndims(q) != ndims(Δ.q)
-                    ∂M = dropdims(sum(Δ.M; dims=ndims(Δ.M)); dims=ndims(Δ.M))
-                    ∂q = dropdims(sum(Δ.q; dims=ndims(Δ.q)); dims=ndims(Δ.q))
-                else
-                    ∂M = Δ.M
-                    ∂q = Δ.q
+                if isbatched(prob)
+                    if ndims(M) != ndims(Δ.M)
+                        ∂M = dropdims(sum(Δ.M; dims=ndims(Δ.M)); dims=ndims(Δ.M))
+                    end
+                    if ndims(q) != ndims(Δ.q)
+                        ∂q = dropdims(sum(Δ.q; dims=ndims(Δ.q)); dims=ndims(Δ.q))
+                    end
                 end
+                @isdefined(∂M) || (∂M = Δ.M)
+                @isdefined(∂q) || (∂q = Δ.q)
             end
             return ∂∅, ∂M, ∂q, ∂0
         end

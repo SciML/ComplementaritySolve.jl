@@ -55,7 +55,7 @@ rng = StableRNG(0)
                 for loss_function in (sum, Base.Fix1(sum, abs2))
                     ∂A, ∂q = Zygote.gradient(A, q) do A, q
                         prob = LinearComplementarityProblem{false}(A, q, u0)
-                        sol = solve(prob, solver; sensealg=LinearComplementarityAdjoint())
+                        sol = solve(prob, solver)
                         return loss_function(sol.u)
                     end
 
@@ -74,55 +74,67 @@ rng = StableRNG(0)
                         end,
                         θ)
 
-                    @test ∂A !== nothing && !iszero(∂A)
-                    @test ∂q !== nothing && !iszero(∂q)
+                    @test ∂A !== nothing && !iszero(∂A) && size(∂A) == size(A)
+                    @test ∂q !== nothing && !iszero(∂q) && size(∂q) == size(q)
                     @test ∂A≈∂θ_fd.A atol=1e-3 rtol=1e-3
                     @test ∂q≈∂θ_fd.q atol=1e-3 rtol=1e-3
-
                     @test ∂A≈∂θ_finitediff.A atol=1e-3 rtol=1e-3
                     @test ∂q≈∂θ_finitediff.q atol=1e-3 rtol=1e-3
+
+                    @test_nowarn Zygote.gradient(A, q) do M, q
+                        prob = LinearComplementarityProblem{true}(M, q, u0)
+                        sol = solve(prob)
+                        return loss_function(sol.u)
+                    end
                 end
             end
 
-            @testset "Batched Adjoint Problem" begin
-                szA = (2, 2, 5)
-                szq = (2, 5)
-                A_ = rand(rng, Float32, szA...)
+            __sizes_list = (((2, 2, 5), (2, 5)),
+                ((2, 2), (2, 5)),
+                ((2, 2, 1), (2, 5)),
+                ((2, 2, 5), (2, 1)),
+                ((2, 2, 5), (2, 5)))
+            @testset "Batched Adjoint Problem: size(M) = $(szM), size(q) = $(szq)" for (szM, szq) in __sizes_list
+                M_ = rand(rng, Float32, szM...)
                 q_ = randn(rng, Float32, szq...)
 
-                solver = NonlinearReformulation(:smooth,
-                    SimpleNewtonRaphson(; batched=true))
-
                 for loss_function in (sum, Base.Fix1(sum, abs2))
-                    ∂A, ∂q = Zygote.gradient(A_, q_) do A, q
-                        prob = LinearComplementarityProblem{false}(A, q)
-                        sol = solve(prob, solver; sensealg=LinearComplementarityAdjoint())
+                    ∂M, ∂q = Zygote.gradient(M_, q_) do M, q
+                        prob = LinearComplementarityProblem{false}(M, q)
+                        sol = solve(prob)
                         return loss_function(sol.u)
                     end
 
-                    θ = ComponentArray((; A=A_, q=q_))
+                    θ = ComponentArray((; M=M_, q=q_))
                     ∂θ_fd = ForwardDiff.gradient(θ) do θ
-                        prob = LinearComplementarityProblem{false}(θ.A, θ.q)
-                        sol = solve(prob, solver)
+                        prob = LinearComplementarityProblem{false}(θ.M, θ.q)
+                        sol = solve(prob)
                         return loss_function(sol.u)
                     end
 
                     (∂θ_finitediff,) = FiniteDifferences.grad(central_fdm(3, 1),
                         θ -> begin
-                            prob = LinearComplementarityProblem{false}(θ.A, θ.q)
-                            sol = solve(prob, PGS())
+                            prob = LinearComplementarityProblem{false}(θ.M, θ.q)
+                            sol = solve(prob)
                             return loss_function(sol.u)
                         end,
                         θ)
 
-                    @test ∂A !== nothing && !iszero(∂A)
-                    @test ∂q !== nothing && !iszero(∂q)
-                    @test ∂A≈∂θ_fd.A atol=1e-3 rtol=1e-3
+                    @test ∂M !== nothing && !iszero(∂M) && size(∂M) == size(M_)
+                    @test ∂q !== nothing && !iszero(∂q) && size(∂q) == size(q_)
+                    @test ∂M≈∂θ_fd.M atol=1e-3 rtol=1e-3
                     @test ∂q≈∂θ_fd.q atol=1e-3 rtol=1e-3
+                    @test ∂M≈∂θ_finitediff.M atol=1e-3 rtol=1e-3
+                    @test ∂q≈∂θ_finitediff.q atol=1e-3 rtol=1e-3
 
-                    # FIXME: Probably the solutions reached are different, so the tests fail
-                    @test_broken ∂A≈∂θ_finitediff.A atol=1e-3 rtol=1e-3
-                    @test_broken ∂q≈∂θ_finitediff.q atol=1e-3 rtol=1e-3
+                    # We can't check for correctness with FwdDiff & FiniteDifferences
+                    # for inplace problems since the in-place batched solvers are not as
+                    # accurate as the non-inplace ones.
+                    @test_nowarn Zygote.gradient(M_, q_) do M, q
+                        prob = LinearComplementarityProblem{true}(M, q)
+                        sol = solve(prob)
+                        return loss_function(sol.u)
+                    end
                 end
             end
         end

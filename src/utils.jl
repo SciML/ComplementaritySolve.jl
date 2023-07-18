@@ -63,3 +63,14 @@ function __make_block_diagonal_operator(x::AbstractArray{<:Number, 3})
     end
     return FunctionOperator(matvec, similar(x, N * L))
 end
+
+function __check_correct_batching(args...)
+    return __check_correct_batching(map(x -> size(x, ndims(x)), args)...)
+end
+function __check_correct_batching(args::Int...)
+    batch_size = maximum(args)
+    foreach(args) do arg
+        return arg != 1 && arg != batch_size && throw(ArgumentError("Incorrect batching"))
+    end
+    return batch_size
+end
