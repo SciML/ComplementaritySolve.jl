@@ -1,6 +1,11 @@
 struct PATHSolverAlgorithm <: AbstractComplementarityAlgorithm end
 
-function __solve(prob::MCP{iip}, alg::PATHSolverAlgorithm, u0, p; verbose::Bool=true, kwargs...) where {iip}
+function __solve(prob::MCP{iip},
+    alg::PATHSolverAlgorithm,
+    u0,
+    p;
+    verbose::Bool=true,
+    kwargs...) where {iip}
     (; f, lb, ub) = prob
 
     (u0, lb, ub, p) = map((u0, lb, ub, p)) do x
