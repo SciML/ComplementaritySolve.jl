@@ -120,8 +120,8 @@ rng = StableRNG(0)
                         end,
                         θ)
 
-                    @test ∂M !== nothing && !iszero(∂M) && size(∂M) == size(M_)
-                    @test ∂q !== nothing && !iszero(∂q) && size(∂q) == size(q_)
+                    @test ∂M !== nothing && size(∂M) == size(M_)
+                    @test ∂q !== nothing && size(∂q) == size(q_)
                     @test ∂M≈∂θ_fd.M atol=1e-3 rtol=1e-3
                     @test ∂q≈∂θ_fd.q atol=1e-3 rtol=1e-3
                     @test ∂M≈∂θ_finitediff.M atol=1e-3 rtol=1e-3

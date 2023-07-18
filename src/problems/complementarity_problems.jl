@@ -40,7 +40,8 @@ function LinearComplementarityProblem{iip}(M, q, u0=nothing) where {iip}
         u0 = similar(q, batched ? (size(q, 1), batch_size) : size(q))
         fill!(u0, 0)
     elseif batched
-        @assert size(u0, 2) == batch_size
+        @assert ndims(u0) == 2
+        batch_size > 1 && @assert size(u0, 2) == batch_size
     end
 
     return LinearComplementarityProblem{iip, batched}(M, q, u0)
