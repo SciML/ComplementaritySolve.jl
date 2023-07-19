@@ -39,7 +39,7 @@ end
 
     u, ∂u = sol.u, ∂sol.u
 
-    (L, N), Lₘ = __lcp_dims(u, M)
+    (L, _), Lₘ = __lcp_dims(u, M)
 
     u₋ = batched ? (batched_mul(M, reshape(u, size(u, 1), 1, :))[:, 1, :] .+ q) :
          (M * u .+ q)
@@ -50,9 +50,13 @@ end
     ∂ϕ₋∂v₋ = __diagonal(@. 1 - v₋ * den)
 
     ∂Mq = __∇lcp(u, ∂u, ∂ϕ₋∂u₋, M, ∂ϕ₋∂v₋, L, Lₘ, sensealg.linsolve)
+    ∂M_ = selectdim(∂Mq, 1, 1:Lₘ)
+    ∂q_ = selectdim(∂Mq, 1, (Lₘ + 1):size(∂Mq, 1))
 
-    ∂M = reshape(vec(selectdim(∂Mq, 1, 1:Lₘ)), size(M))
-    ∂q = reshape(vec(selectdim(∂Mq, 1, (Lₘ + 1):size(∂Mq, 1))), size(q))
+    if batched
+        size(∂M_, 2) != size(M, 3) && (∂M_ = sum(∂M_; dims=2))
+        size(∂q_, 2) != size(q, 2) && (∂q_ = sum(∂q_; dims=2))
+    end
 
-    return (∂M, ∂q)
+    return (reshape(∂M_, size(M)), reshape(∂q_, size(q)))
 end

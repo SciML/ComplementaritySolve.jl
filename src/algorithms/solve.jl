@@ -41,7 +41,15 @@ __default_sensealg(::MixedComplementarityProblem) = MixedComplementarityAdjoint(
 function __default_solver(::T) where {T <: AbstractComplementarityProblem}
     return error("No default solver for type $(T). Please specify a solver.")
 end
-__default_solver(::LinearComplementarityProblem) = NonlinearReformulation()
+function __default_solver(prob::LCP)
+    if isbatched(prob)
+        nlsolver = (SciMLBase.isinplace(prob) ? SimpleDFSane : SimpleNewtonRaphson)(;
+            batched=true)
+        return NonlinearReformulation(:smooth, nlsolver)
+    else
+        return NonlinearReformulation()
+    end
+end
 __default_solver(::MixedComplementarityProblem) = NonlinearReformulation()
 
 # Algorithms should dispatch on __solve
