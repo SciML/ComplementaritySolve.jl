@@ -1,11 +1,5 @@
-using ComplementaritySolve,
-    ComponentArrays,
-    FiniteDifferences,
-    ForwardDiff,
-    SimpleNonlinearSolve,
-    StableRNGs,
-    Test,
-    Zygote
+using ComplementaritySolve, ComponentArrays, FiniteDifferences, ForwardDiff
+using SimpleNonlinearSolve, StableRNGs, Test, Zygote
 
 rng = StableRNG(0)
 
@@ -21,6 +15,7 @@ rng = StableRNG(0)
             BokhovenIterativeAlgorithm(),
             RPSOR(; ω=1.0, ρ=0.1),
             PGS(),
+            InteriorPointMethod(),
         ]
             sol = solve(prob, solver)
 
@@ -38,6 +33,7 @@ rng = StableRNG(0)
                 PGS(),
                 PSOR(),
                 NonlinearReformulation(:smooth, SimpleDFSane(; batched=true)),
+                InteriorPointMethod(),
             ]
                 sol = solve(prob, solver)
 

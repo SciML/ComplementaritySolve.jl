@@ -35,7 +35,7 @@ __notangent(::ZeroTangent) = true
 __notangent(::NoTangent) = true
 __notangent(::Any) = false
 
-__unfillarray(x::FillArrays.AbstractFill) = collect(x)
+__unfillarray(x::AbstractFill) = collect(x)
 __unfillarray(x) = x
 
 # Diagonal Utilities
