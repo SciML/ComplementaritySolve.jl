@@ -3,3 +3,4 @@ test_ext
 .vscode
 wip
 LocalPreferences.toml
+test/Manifest.toml
