@@ -38,10 +38,29 @@ __notangent(::Any) = false
 __unfillarray(x::AbstractFill) = collect(x)
 __unfillarray(x) = x
 
+function batched_matvec(A::AA3, x::AM)
+    y = similar(x, promote_type(eltype(x), eltype(A)), size(A, 1), size(x, 2))
+    return batched_matvec!(y, A, x, true, false)
+end
+@views function batched_matvec!(y::AM, A::AA3, x::AM, α, β)
+    y_ = reshape(y, size(y, 1), 1, size(y, 2))
+    x_ = reshape(x, size(x, 1), 1, size(x, 2))
+    batched_mul!(y_, A, x_, α, β)
+    return y_[:, 1, :]
+end
+
+## Matmul with proper dispatches
+matmul(A::AM, x::Union{AV, AM}) = A * x
+matmul(A::AA3, x::AM) = batched_matvec(A, x)
+matmul(A::AA3, x::AA3) = batched_mul(A, x)
+matmul!(y::Union{AV, AM}, A::AM, x::Union{AV, AM}, α, β) = mul!(y, A, x, α, β)
+matmul!(y::AM, A::AA3, x::AM, α, β) = batched_matvec!(y, A, x, α, β)
+matmul!(y::AA3, A::AA3, x::AA3, α, β) = batched_mul!(y, A, x, α, β)
+
 # Diagonal Utilities
 ## FIXME: This needs to be optimized to not use an insane amount of
 ## useless meemory, but for now this would work.
-function __diagonal(x::AbstractMatrix)
+function __diagonal(x::AM)
     L, N = size(x)
     y = similar(x, (L, L, N))
     fill!(y, eltype(x)(0))
@@ -51,11 +70,11 @@ function __diagonal(x::AbstractMatrix)
     end
     return y
 end
-__diagonal(x::AbstractVector) = Diagonal(x)
+__diagonal(x::AV) = Diagonal(x)
 
-function __make_block_diagonal_operator(x::AbstractArray{<:Number, 3})
+function __make_block_diagonal_operator(x::AA3)
     L, M, N = size(x)  # L == M
-    @views function matvec(v::AbstractVector, u::AbstractVector, p, t)
+    @views function matvec(v::AV, u::AV, p, t)
         @batch per=core for i in 1:N
             mul!(v[((i - 1) * L + 1):(i * L)], x[:, :, i], u[((i - 1) * L + 1):(i * L)])
         end

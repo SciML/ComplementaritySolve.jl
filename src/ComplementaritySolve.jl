@@ -25,6 +25,10 @@ import TruncatedStacktraces: @truncate_stacktrace
 const ∂0 = ZeroTangent()
 const ∂∅ = NoTangent()
 const ∅p = SciMLBase.NullParameters()
+const AA = AbstractArray
+const AV = AbstractVector
+const AM = AbstractMatrix
+const AA3 = AbstractArray{T, 3} where {T}
 
 ### ----- Type Piracy Starts ----- ###
 ArrayInterfaceCore.can_setindex(::Type{<:AbstractFill}) = false
