@@ -2,9 +2,9 @@ steps:
   - label: ":julia: Format Check"
     plugins:
       - JuliaCI/julia#v1:
-          version: "{{matrix.julia}}"
+          version: "1"
     agents:
-      queue: "juliaecosystem"
+      queue: "default"
     if: build.message !~ /\[skip tests\]/
     timeout_in_minutes: 240
     command: |
@@ -31,7 +31,7 @@ steps:
           dirs:
             - src
     agents:
-      queue: "juliaecosystem"
+      queue: "default"
     env:
       GROUP: "CPU"
     if: build.message !~ /\[skip tests\]/
@@ -45,3 +45,6 @@ steps:
         - with:
             julia: "nightly"
           soft_fail: true
+
+env:
+  CODECOV_TOKEN: "ea921ebe-5b71-4944-a2c4-d019f95d5024" # Someday I will regret doing this
