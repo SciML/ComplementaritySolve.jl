@@ -1,20 +1,7 @@
-using ChainRulesCore,
-    ComplementaritySolve,
-    ComponentArrays,
-    DiffEqBase,
-    ForwardDiff,
-    LinearAlgebra,
-    Optimization,
-    OptimizationOptimisers,
-    OrdinaryDiffEq,
-    SciMLSensitivity,
-    SimpleNonlinearSolve,
-    SparseArrays,
-    StableRNGs,
-    Statistics,
-    SteadyStateDiffEq,
-    Test,
-    Zygote
+using ChainRulesCore, ComplementaritySolve, ComponentArrays, DiffEqBase, ForwardDiff
+using LinearAlgebra, Optimization, OptimizationOptimisers, OrdinaryDiffEq, SciMLSensitivity
+using SimpleNonlinearSolve, SparseArrays, StableRNGs, Statistics, SteadyStateDiffEq, Test
+using Zygote
 
 const m₁ = 0.5f0
 const m₂ = 1.0f0

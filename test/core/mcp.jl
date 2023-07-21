@@ -1,13 +1,5 @@
-using ComplementaritySolve
-using BenchmarkTools,
-    ComponentArrays,
-    FiniteDifferences,
-    ForwardDiff,
-    NonlinearSolve,
-    SimpleNonlinearSolve,
-    StableRNGs,
-    Test,
-    Zygote
+using BenchmarkTools, ComplementaritySolve, ComponentArrays, FiniteDifferences
+using ForwardDiff, NonlinearSolve, SimpleNonlinearSolve, StableRNGs, Test, Zygote
 import ParametricMCPs
 
 rng = StableRNG(0)

@@ -6,10 +6,10 @@ LinearComplementarityAdjoint() = LinearComplementarityAdjoint(nothing)
 
 @truncate_stacktrace LinearComplementarityAdjoint
 
-__lcp_dims(u::AbstractVector, M) = (length(u), -1), length(u)^2
-__lcp_dims(u::AbstractMatrix, M) = size(u), prod(size(M)[1:2])
+__lcp_dims(u::AV, M) = (length(u), -1), length(u)^2
+__lcp_dims(u::AM, M) = size(u), prod(size(M)[1:2])
 
-function __∇lcp(u::AbstractVector, ∂u, ∂ϕ₋∂u₋, M, ∂ϕ₋∂v₋, L, Lₘ, linsolve)
+function __∇lcp(u::AV, ∂u, ∂ϕ₋∂u₋, M, ∂ϕ₋∂v₋, L, Lₘ, linsolve)
     A = M' * ∂ϕ₋∂u₋ + ∂ϕ₋∂v₋
     # Following line is same as
     # -∂ϕ₋∂u₋ * reduce(hcat, Zygote.jacobian((A, q) -> A * u .+ q, A, q))
@@ -19,7 +19,7 @@ function __∇lcp(u::AbstractVector, ∂u, ∂ϕ₋∂u₋, M, ∂ϕ₋∂v₋, 
     return vec(λ' * B)
 end
 
-function __∇lcp(u::AbstractMatrix, ∂u, ∂ϕ₋∂u₋, M, ∂ϕ₋∂v₋, L, Lₘ, linsolve)
+function __∇lcp(u::AM, ∂u, ∂ϕ₋∂u₋, M, ∂ϕ₋∂v₋, L, Lₘ, linsolve)
     A = __make_block_diagonal_operator(batched_transpose(M) ⊠ ∂ϕ₋∂u₋ .+ ∂ϕ₋∂v₋)
     B = -hcat(reshape(reshape(u, 1, 1, L, :) .* reshape(∂ϕ₋∂u₋, L, L, 1, :), L, Lₘ, :),
         ∂ϕ₋∂u₋ ⊠ __diagonal(one.(u)))
@@ -41,8 +41,7 @@ end
 
     (L, _), Lₘ = __lcp_dims(u, M)
 
-    u₋ = batched ? (batched_mul(M, reshape(u, size(u, 1), 1, :))[:, 1, :] .+ q) :
-         (M * u .+ q)
+    u₋ = matmul(M, u) .+ q
     v₋ = u
 
     den = @. inv(√(u₋^2 + v₋^2))
