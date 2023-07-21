@@ -1,0 +1,131 @@
+# Benchmarking Available LCP Solvers
+
+```julia; echo = false
+import Pkg
+Pkg.activate(joinpath(@__DIR__, ".."))
+```
+
+## Load Dependencies
+
+```julia
+using BenchmarkTools, ComplementaritySolve, DataFrames, PyPlot, StableRNGs
+```
+
+## Basic LCP
+
+```julia
+A₁ = [2.0 1; 1 2.0]
+q₁ = [-5.0, 6.0]
+```
+
+### Unbatched Version
+
+```julia
+SOLVERS = [BokhovenIterativeAlgorithm(),
+    RPSOR(; ω=1.0, ρ=0.1),
+    PGS(),
+    RPGS(),
+    InteriorPointMethod(),
+    NonlinearReformulation(),
+]
+times = zeros(length(SOLVERS), 2)
+solvers = ["Bok.", "RPSOR", "PGS", "RPGS", "IPM", "NLR"]
+
+for (i, solver) in enumerate(SOLVERS)
+    prob_iip = LCP{true}(A₁, q₁, rand(StableRNG(0), 2))
+    prob_oop = LCP{false}(A₁, q₁, rand(StableRNG(0), 2))
+    times[i, 1] = @belapsed solve($prob_iip, $solver)
+    times[i, 2] = @belapsed solve($prob_oop, $solver)
+end
+```
+
+```julia
+xloc = 1:length(solvers)
+width = 0.4  # the width of the bars
+multiplier = 0
+fig, ax = subplots(layout="constrained")
+ax.set_yscale("log")
+
+for (i, group) in enumerate(["Inplace", "Out of Place"])
+    global multiplier
+    offset = width * multiplier
+    rects = ax.bar(xloc .+ offset, times[:, i], width, label=group)
+    for (j, rect) in enumerate(rects)
+        height = rect.get_height()
+        ax.annotate("$(round(times[j, i] * 10^6; digits=2))μs",
+                    xy=(rect.get_x() + rect.get_width() / 2, height),
+                    xytext=(0, 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha="center", va="bottom")
+    end
+    multiplier += 1
+end
+
+ax.set_ylabel("Times (s)")
+ax.set_title("Basic LCP Unbatched")
+ax.set_xticks(xloc .+ width ./ 2, solvers)
+ax.legend(loc="upper right", ncols=3)
+fig.tight_layout()
+fig
+```
+
+### Batched Version
+
+Here we are batching the Problem with `N` starting values (typically batching LCPs involves
+batching multiple `M` and `q`)
+
+
+```julia
+SOLVERS = [BokhovenIterativeAlgorithm(),
+    RPSOR(; ω=1.0, ρ=0.1),
+    PGS(),
+    RPGS(),
+    InteriorPointMethod(),
+    NonlinearReformulation(),
+]
+BATCH_SIZES = 2 .^ 1:2:11
+times = zeros(length(SOLVERS), length(BATCH_SIZES), 2)
+solvers = ["Bok.", "RPSOR", "PGS", "RPGS", "IPM", "NLR"]
+
+for (i, solver) in enumerate(SOLVERS)
+    for (j, N) in enumerate(BATCH_SIZES)
+        prob_iip = LCP{true}(A₁, q₁, rand(StableRNG(0), 2, N))
+        prob_oop = LCP{false}(A₁, q₁, rand(StableRNG(0), 2, N))
+        times[i, j, 1] = @elapsed solve(prob_iip, solver)
+        times[i, j, 2] = @elapsed solve(prob_oop, solver)
+    end
+end
+```
+
+
+```julia
+xloc = 1:length(solvers)
+width = 0.4  # the width of the bars
+multiplier = 0
+fig, ax = subplots(layout="constrained")
+ax.set_yscale("log")
+
+for (i, group) in enumerate(["Inplace", "Out of Place"])
+    global multiplier
+    offset = width * multiplier
+    rects = ax.bar(xloc .+ offset, times[:, i], width, label=group)
+    for (j, rect) in enumerate(rects)
+        height = rect.get_height()
+        ax.annotate("$(round(times[j, i] * 10^6; digits=2))μs",
+                    xy=(rect.get_x() + rect.get_width() / 2, height),
+                    xytext=(0, 3),  # 3 points vertical offset
+                    textcoords="offset points",
+                    ha="center", va="bottom")
+    end
+    multiplier += 1
+end
+
+ax.set_ylabel("Times (s)")
+ax.set_title("Basic LCP Unbatched")
+ax.set_xticks(xloc .+ width ./ 2, solvers)
+ax.legend(loc="upper right", ncols=3)
+fig.tight_layout()
+fig
+```
+
+
