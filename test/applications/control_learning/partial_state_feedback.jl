@@ -21,6 +21,7 @@ const mp = 1.5;
 const l = 0.5;
 const k1 = 0.01;
 
+rng = StableRNG(0)
 #dynamics of the partial feedback cartpole system
 A = sparse([1, 2, 3, 4, 5, 8],
     [5, 6, 7, 8, 4, 4],
@@ -38,7 +39,7 @@ c = 0.0
 #steady state
 x_steady = [0.0, 0.0, 0.0, 0.0]
 #initial pos
-r_x = rand(3) .* 2 .- 1
+r_x = rand(rng,3) .* 2 .- 1
 x0 = [10 * r_x[1], 0.0, r_x[2], r_x[3], 0.0, 0.0, 0.0, 0.0]
 
 #extract dimension information
