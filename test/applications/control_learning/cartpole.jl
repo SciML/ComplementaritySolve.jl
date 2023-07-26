@@ -23,7 +23,7 @@ rng = StableRNG(0)
 #steady state
 x_steady = [0.0, 0.0, 0.0, 0.0]
 #initial pos
-r_x = rand(rng,3) .* 2 .- 1
+r_x = rand(rng, 3) .* 2 .- 1
 x0 = [10 * r_x[1], 0.0, r_x[2], r_x[3]]
 
 #dynamics of the cartpole system
