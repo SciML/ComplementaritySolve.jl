@@ -123,10 +123,10 @@ end
     result_neurallcs2 = Optimization.solve(optprob2,
         ADAM(0.003);
         callback=callback,
-        maxiters=25000)
+        maxiters=50000)
 
     θ_estimated = result_neurallcs2.u
 
     # Convergence Test
-    @test loss_f(θ_estimated) ≤ 1.5
+    @test loss_f(θ_estimated) ≤ 1.0
 end
