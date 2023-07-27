@@ -101,10 +101,10 @@ end
 
     function callback(θ, loss)
         iter += 1
-        if iter % 100 == 1 || loss ≤ 1.5
+        if iter % 100 == 1 || loss ≤ 1.0
             @info "Learning a Stabilizing Controller-ish" iter=iter loss=loss
         end
-        return loss ≤ 1.5
+        return loss ≤ 1.0
     end
 
     adtype = Optimization.AutoZygote()
