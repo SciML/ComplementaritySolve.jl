@@ -130,7 +130,7 @@ end
     result_neurallcs2 = Optimization.solve(optprob2,
         ADAM(0.01);
         callback=callback,
-        maxiters=15000)
+        maxiters=25000)
 
     θ_estimated = result_neurallcs2.u
 
