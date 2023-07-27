@@ -101,10 +101,10 @@ end
 
     function callback(θ, loss)
         iter += 1
-        if iter % 100 == 1 || loss ≤ 0.01
-            @info "Parameter Estimation with datapoints" iter=iter loss=loss
+        if iter % 100 == 1 || loss ≤ 0.1
+            @info "Learning a Stabilizing Controller-ish" iter=iter loss=loss
         end
-        return loss ≤ 0.01
+        return loss ≤ 0.1
     end
 
     adtype = Optimization.AutoZygote()
@@ -121,12 +121,12 @@ end
     optprob2 = Optimization.OptimizationProblem(optf, result_neurallcs.u)
 
     result_neurallcs2 = Optimization.solve(optprob2,
-        ADAM(0.001);
+        ADAM(0.01);
         callback=callback,
-        maxiters=10000)
+        maxiters=15000)
 
     θ_estimated = result_neurallcs2.u
 
     # Convergence Test
-    @test loss_f(θ_estimated) ≤ 0.5
+    @test loss_f(θ_estimated) ≤ 0.1
 end

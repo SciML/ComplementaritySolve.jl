@@ -109,7 +109,7 @@ end
     function callback(θ, loss)
         iter += 1
         if iter % 100 == 1 || loss ≤ 0.1
-            @info "Parameter Estimation with datapoints" iter=iter loss=loss
+            @info "Learning a Stabilizing Controller-ish" iter=iter loss=loss
         end
         return loss ≤ 0.1
     end
@@ -130,7 +130,7 @@ end
     result_neurallcs2 = Optimization.solve(optprob2,
         ADAM(0.01);
         callback=callback,
-        maxiters=10000)
+        maxiters=15000)
 
     θ_estimated = result_neurallcs2.u
 
