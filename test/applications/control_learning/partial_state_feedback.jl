@@ -7,38 +7,40 @@ using Zygote,
     SciMLSensitivity,
     Test,
     ComponentArrays,
+    SparseArrays,
     StableRNGs
 
 using ComplementaritySolve
 
+#parameters 
+const m1 = 1.0;
+const m2 = 1.0;
+const m3 = 1.0;
 const g = 9.81;
-const mp = 0.1;
-const mc = 1;
+const mp = 1.5;
 const l = 0.5;
-const d1 = 0.1;
-const k1 = 10.0;
-const k2 = 10.0;
+const k1 = 0.01;
 
 rng = StableRNG(0)
+#dynamics of the partial feedback cartpole system
+A = sparse([1, 2, 3, 4, 5, 8],
+    [5, 6, 7, 8, 4, 4],
+    [1.0, 1.0, 1.0, 1.0, g * mp / m1, g * (m1 + mp) / (m1 * l)])
+B = sparse([5, 7, 8], [1, 2, 1], [1 / m1, 1 / m3, 1 / (m1 * l)])
+D = sparse([5, 6, 6, 7, 8],
+    [1, 1, 2, 2, 1],
+    [-1 / m1, 1 / m2, -1 / m2, 1 / m3, -1 / (m1 * l)])
+a = 0.0
+E = [-1.0 1.0 0.0 0.0 0.0 0.0 0.0 0.0; 0.0 -1.0 1.0 0.0 0.0 0.0 0.0 0.0]
+E = sparse(E)
+F = spdiagm([1 / k1, 1 / k1])
+c = 0.0
+
 #steady state
 x_steady = [0.0, 0.0, 0.0, 0.0]
 #initial pos
 r_x = rand(rng, 3) .* 2 .- 1
-x0 = [10 * r_x[1], 0.0, r_x[2], r_x[3]]
-
-#dynamics of the cartpole system
-
-A = [0.0 0.0 1.0 0.0
-    0.0 0.0 0.0 1.0
-    0.0 (g * mp)/mc 0.0 0.0
-    0.0 g * (mc + mp)/(l * mc) 0.0 0.0]
-B = reshape([0.0; 0.0; 1 / mc; 1 / (l * mc)], (4, 1));
-
-D = [zeros(Float64, 3, 2); 1/(l * mp) -1/(l * mp)]
-E = [-1.0 l 0.0 0.0; 1.0 -l 0.0 0.0]
-F = [1/k1 0.0; 0.0 1/k2]
-c = d1;
-a = 0.0;#[0.0;0.0;0.0; 0.0 ]
+x0 = [10 * r_x[1], 0.0, r_x[2], r_x[3], 0.0, 0.0, 0.0, 0.0]
 
 #extract dimension information
 n = size(A, 2) #dimension of state space
@@ -47,18 +49,22 @@ m = size(D, 2) #number of contacts
 
 tspan = (0.0, 1.0)
 
-controller(x, λ, p, _) = p.K * x .+ p.L * λ
+rng = StableRNG(0)
+
+tspan = (0.0, 1.0)
 
 # Taken from https://arxiv.org/pdf/2008.02104.pdf Section 6.C
-stable_K = Float64[3.69 -46.7 3.39 -5.71]
-stable_L = Float64[-13.98 13.98]
+stable_K = [-2.8, 6.6, -263.1, 6.4, -2.1, -30.2, 11.5, -12.1, 12.1, 2.6, -4.7, 6.6]
+stable_L = [-3.7 -0.6;
+    -0.6 7.2]
 
 stable_θ = ComponentArray(; K=stable_K, L=stable_L)
 
-rng = StableRNG(0)
-#prob = LCS(x0, controller, tspan, stable_θ, A, B, D, a, E, F, c)
-#solver = NaiveLCSAlgorithm(Tsit5(), NonlinearReformulation())
-#sol = solve(prob, solver)
+function controller(x, λ, p, _)
+    K = reshape(vcat(p.K[1], 0.0, p.K[2:4], 0.0, p.K[5:7], 0.0, p.K[8:10], 0.0, p.K[11:12]),
+        (k, n))
+    return K * x .+ p.L * λ
+end
 
 @testset "Stable Controller" begin
     @testset "Finite Horizon ODE" begin
@@ -85,10 +91,8 @@ rng = StableRNG(0)
     end
 end
 
-@testset "Learn a stabilizing controller" begin
-    θ_init = ComponentArray(;
-        K=10 * (rand(rng, Float64, (k, n)) .- 0.5),
-        L=10 * (rand(rng, Float64, (k, m)) .- 0.5))
+@testset "Learn a stabilizing controllerish" begin
+    θ_init = ComponentArray(; K=randn(rng, Float64, 12), L=rand(rng, Float64, (k, m)))
     solver = NaiveLCSAlgorithm(Tsit5(), NonlinearReformulation())
 
     function loss_f(θ)
@@ -97,14 +101,17 @@ end
         return sum(abs2, lcs_sol.u[end]) / n
     end
 
+    prob = LCS(x0, controller, tspan, θ_init, A, B, D, a, E, F, c)
+    lcs_sol = solve(prob, solver; abstol=1e-3, reltol=1e-3)
+
     iter = 0
 
     function callback(θ, loss)
         iter += 1
-        if iter % 100 == 1 || loss ≤ 0.5
+        if iter % 100 == 1 || loss ≤ 0.1
             @info "Learning a Stabilizing Controller-ish" iter=iter loss=loss
         end
-        return loss ≤ 0.5
+        return loss ≤ 0.1
     end
 
     adtype = Optimization.AutoZygote()
@@ -116,24 +123,17 @@ end
     result_neurallcs = Optimization.solve(optprob,
         ADAM(0.1);
         callback=callback,
-        maxiters=10000)
+        maxiters=5000)
 
     optprob2 = Optimization.OptimizationProblem(optf, result_neurallcs.u)
 
     result_neurallcs2 = Optimization.solve(optprob2,
-        ADAM(0.003);
-        callback=callback,
-        maxiters=30000)
-
-    optprob3 = Optimization.OptimizationProblem(optf, result_neurallcs2.u)
-
-    result_neurallcs3 = Optimization.solve(optprob3,
-        ADAM(0.0003);
+        ADAM(0.01);
         callback=callback,
         maxiters=25000)
 
-    θ_estimated = result_neurallcs3.u
+    θ_estimated = result_neurallcs2.u
 
     # Convergence Test
-    @test loss_f(θ_estimated) ≤ 0.5
+    @test loss_f(θ_estimated) ≤ 0.1
 end
