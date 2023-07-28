@@ -87,7 +87,7 @@ end
 
 @testset "Learn a stabilizing controller" begin
     θ_init = ComponentArray(;
-        K=10 * (randn(rng, Float64, (k, n)) .- 0.5),
+        K=10 * (rand(rng, Float64, (k, n)) .- 0.5),
         L=10 * (rand(rng, Float64, (k, m)) .- 0.5))
     solver = NaiveLCSAlgorithm(Tsit5(), NonlinearReformulation())
 
