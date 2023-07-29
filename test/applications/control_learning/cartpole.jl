@@ -5,6 +5,7 @@ using Zygote,
     Optimization,
     OptimizationOptimisers,
     SciMLSensitivity,
+    SteadyStateDiffEq,
     Test,
     ComponentArrays,
     StableRNGs
