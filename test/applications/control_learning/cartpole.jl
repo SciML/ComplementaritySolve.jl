@@ -1,17 +1,16 @@
 using Zygote,
     LinearAlgebra,
     SimpleNonlinearSolve,
-    TruncatedStacktraces,
-    DifferentialEquations,
-    Plots,
-    Distributions,
+    OrdinaryDiffEq,
     Optimization,
-    OptimizationOptimJL,
     OptimizationOptimisers,
     SciMLSensitivity,
+    SteadyStateDiffEq,
     Test,
-    ComponentArrays
-using ComplementaritySolve, StableRNGs
+    ComponentArrays,
+    StableRNGs
+
+using ComplementaritySolve
 
 const g = 9.81;
 const mp = 0.1;
@@ -21,10 +20,11 @@ const d1 = 0.1;
 const k1 = 10.0;
 const k2 = 10.0;
 
+rng = StableRNG(0)
 #steady state
 x_steady = [0.0, 0.0, 0.0, 0.0]
 #initial pos
-r_x = rand(Uniform(-1, 1), 3)
+r_x = rand(rng, 3) .* 2 .- 1
 x0 = [10 * r_x[1], 0.0, r_x[2], r_x[3]]
 
 #dynamics of the cartpole system
@@ -115,7 +115,7 @@ end
 
 @testset "Learn a stabilizing controller" begin
     θ_init = ComponentArray(;
-        K=10 * (randn(rng, Float64, (k, n)) .- 0.5),
+        K=10 * (rand(rng, Float64, (k, n)) .- 0.5),
         L=10 * (rand(rng, Float64, (k, m)) .- 0.5))
     solver = NaiveLCSAlgorithm(Tsit5(), NonlinearReformulation())
 
@@ -129,10 +129,10 @@ end
 
     function callback(θ, loss)
         iter += 1
-        if iter % 100 == 1 || loss ≤ 0.01
-            @info "Parameter Estimation with datapoints" iter=iter loss=loss
+        if iter % 100 == 1 || loss ≤ 0.5
+            @info "Learning a Stabilizing Controller-ish" iter=iter loss=loss
         end
-        return loss ≤ 0.01
+        return loss ≤ 0.5
     end
 
     adtype = Optimization.AutoZygote()
@@ -144,16 +144,23 @@ end
     result_neurallcs = Optimization.solve(optprob,
         ADAM(0.1);
         callback=callback,
-        maxiters=5000)
+        maxiters=10000)
 
     optprob2 = Optimization.OptimizationProblem(optf, result_neurallcs.u)
 
     result_neurallcs2 = Optimization.solve(optprob2,
-        ADAM(0.001);
+        ADAM(0.003);
         callback=callback,
-        maxiters=10000)
+        maxiters=30000)
 
-    θ_estimated = result_neurallcs2.u
+    optprob3 = Optimization.OptimizationProblem(optf, result_neurallcs2.u)
+
+    result_neurallcs3 = Optimization.solve(optprob3,
+        ADAM(0.0003);
+        callback=callback,
+        maxiters=25000)
+
+    θ_estimated = result_neurallcs3.u
 
     # Convergence Test
     @test loss_f(θ_estimated) ≤ 0.5
