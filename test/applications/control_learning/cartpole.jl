@@ -83,6 +83,33 @@ rng = StableRNG(0)
             all(isfinite, ∂stable_θ_ode)
         end
     end
+
+    @testset "Solve to Infinity (Steady-State)" begin
+        prob = LCS(x0, controller, (first(tspan), Inf64), stable_θ, A, B, D, a, E, F, c)
+        solver = NaiveLCSAlgorithm(DynamicSS(Tsit5();
+                termination_condition=NLSolveTerminationCondition(NLSolveTerminationMode.AbsNorm;
+                    abstol=1e-2,
+                    reltol=1e-2)),
+            NonlinearReformulation())
+        sol = solve(prob, solver; abstol=1e-3, reltol=1e-3)
+
+        @test sol isa SciMLBase.NonlinearSolution
+        @test SciMLBase.successful_retcode(sol)
+        @test all(isfinite, sol.u)
+
+        @test begin
+            ∂stable_θ_ode = only(Zygote.gradient(stable_θ) do θ
+                prob = LCS(x0, controller, (first(tspan), Inf64), θ, A, B, D, a, E, F, c)
+                sol = solve(prob,
+                    solver;
+                    ode_kwargs=(; sensealg=SteadyStateAdjoint(; autojacvec=ZygoteVJP())),
+                    lcp_kwargs=(; sensealg=LinearComplementarityAdjoint()))
+                return sum(abs2, last(sol.u))
+            end)
+
+            all(isfinite, ∂stable_θ_ode)
+        end
+    end
 end
 
 @testset "Learn a stabilizing controller" begin
