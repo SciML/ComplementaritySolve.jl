@@ -8,7 +8,7 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 ## Load Dependencies
 
 ```julia
-using BenchmarkTools, ComplementaritySolve, DataFrames, PyPlot, StableRNGs
+using BenchmarkTools, ComplementaritySolve, DataFrames, NonlinearSolve, PyPlot, StableRNGs
 ```
 
 ## Basic LCP
@@ -27,11 +27,13 @@ SOLVERS = [BokhovenIterativeAlgorithm(),
     RPGS(),
     InteriorPointMethod(),
     NonlinearReformulation(),
+    NonlinearReformulation(:smooth, Broyden(; batched=true)),
 ]
 times = zeros(length(SOLVERS), 2)
-solvers = ["Bok.", "RPSOR", "PGS", "RPGS", "IPM", "NLR"]
+solvers = ["Bok.", "RPSOR", "PGS", "RPGS", "IPM", "NLR (Newton)", "NLR (Broyden)"]
 
 for (i, solver) in enumerate(SOLVERS)
+    @info "Benchmarking $(solvers[i])"
     prob_iip = LCP{true}(A₁, q₁, rand(StableRNG(0), 2))
     prob_oop = LCP{false}(A₁, q₁, rand(StableRNG(0), 2))
     times[i, 1] = @belapsed solve($prob_iip, $solver)
@@ -40,33 +42,34 @@ end
 ```
 
 ```julia
-xloc = 1:length(solvers)
-width = 0.4  # the width of the bars
-multiplier = 0
-fig, ax = subplots(layout="constrained")
-ax.set_yscale("log")
+let _=plt.xkcd()
+    xloc = 1:length(solvers)
+    width = 0.4  # the width of the bars
+    multiplier = 0
+    fig, ax = subplots(layout="constrained", figsize=(14, 6))
+    ax.set_yscale("log")
 
-for (i, group) in enumerate(["Inplace", "Out of Place"])
-    global multiplier
-    offset = width * multiplier
-    rects = ax.bar(xloc .+ offset, times[:, i], width, label=group)
-    for (j, rect) in enumerate(rects)
-        height = rect.get_height()
-        ax.annotate("$(round(times[j, i] * 10^6; digits=2))μs",
-                    xy=(rect.get_x() + rect.get_width() / 2, height),
-                    xytext=(0, 3),  # 3 points vertical offset
-                    textcoords="offset points",
-                    ha="center", va="bottom")
+    for (i, group) in enumerate(["Inplace", "Out of Place"])
+        offset = width * multiplier
+        rects = ax.bar(xloc .+ offset, times[:, i], width, label=group)
+        for (j, rect) in enumerate(rects)
+            height = rect.get_height()
+            ax.annotate("$(round(times[j, i] * 10^6; digits=2))μs",
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha="center", va="bottom")
+        end
+        multiplier += 1
     end
-    multiplier += 1
-end
 
-ax.set_ylabel("Times (s)")
-ax.set_title("Basic LCP Unbatched")
-ax.set_xticks(xloc .+ width ./ 2, solvers)
-ax.legend(loc="upper right", ncols=3)
-fig.tight_layout()
-fig
+    ax.set_ylabel("Times (s)")
+    ax.set_title("Basic LCP Unbatched")
+    ax.set_xticks(xloc .+ width ./ 2, solvers)
+    ax.legend(ncols=3)
+    fig.tight_layout()
+    fig
+end
 ```
 
 ### Batched Version
@@ -81,51 +84,63 @@ SOLVERS = [BokhovenIterativeAlgorithm(),
     PGS(),
     RPGS(),
     InteriorPointMethod(),
-    NonlinearReformulation(),
+    NonlinearReformulation(:smooth, SimpleNewtonRaphson(; batched=true)),
+    NonlinearReformulation(:smooth, SimpleDFSane(; batched=true)),
+    NonlinearReformulation(:smooth, Broyden(; batched=true)),
 ]
-BATCH_SIZES = 2 .^ 1:2:11
+BATCH_SIZES = 2 .^ (1:2:11)
 times = zeros(length(SOLVERS), length(BATCH_SIZES), 2)
-solvers = ["Bok.", "RPSOR", "PGS", "RPGS", "IPM", "NLR"]
+solvers = ["Bok.", "RPSOR", "PGS", "RPGS", "IPM", "NLR (Newton)", "NLR (DFSane)", "NLR (Broyden)"]
 
 for (i, solver) in enumerate(SOLVERS)
+    @info "Benchmarking $(solvers[i])"
     for (j, N) in enumerate(BATCH_SIZES)
         prob_iip = LCP{true}(A₁, q₁, rand(StableRNG(0), 2, N))
         prob_oop = LCP{false}(A₁, q₁, rand(StableRNG(0), 2, N))
-        times[i, j, 1] = @elapsed solve(prob_iip, solver)
-        times[i, j, 2] = @elapsed solve(prob_oop, solver)
+        times[i, j, 2] = @belapsed solve($prob_oop, $solver)
+        if i == 6
+            times[i, j, 1] = -1 # SimpleNewtonRaphson is not implemented for inplace
+            continue
+        end
+        times[i, j, 1] = @belapsed solve($prob_iip, $solver)
     end
 end
 ```
-
 
 ```julia
-xloc = 1:length(solvers)
-width = 0.4  # the width of the bars
-multiplier = 0
-fig, ax = subplots(layout="constrained")
-ax.set_yscale("log")
+let _=plt.xkcd()
+    prop_cycle = plt.rcParams["axes.prop_cycle"]
+    colors = prop_cycle.by_key()["color"]
+    fig, (ax1, ax2) = subplots(1, 2; layout="constrained", sharey=true, sharex=true, figsize=(16, 6))
+    ax1.set_yscale("log")
+    ax1.set_xscale("log")
 
-for (i, group) in enumerate(["Inplace", "Out of Place"])
-    global multiplier
-    offset = width * multiplier
-    rects = ax.bar(xloc .+ offset, times[:, i], width, label=group)
-    for (j, rect) in enumerate(rects)
-        height = rect.get_height()
-        ax.annotate("$(round(times[j, i] * 10^6; digits=2))μs",
-                    xy=(rect.get_x() + rect.get_width() / 2, height),
-                    xytext=(0, 3),  # 3 points vertical offset
-                    textcoords="offset points",
-                    ha="center", va="bottom")
+    fig.suptitle("Basic LCP Batched")
+    ax1.set_title("In-Place Solvers")
+    ax2.set_title("Out-Of-Place Solvers")
+
+    for (j, solver) in enumerate(solvers)
+        if !any(times[j, :, 1] .< 0)
+            ax1.plot(BATCH_SIZES, times[j, :, 1]; label=solver, color=colors[j])
+            ax1.scatter(BATCH_SIZES, times[j, :, 1]; color=colors[j])
+        end
+        if !any(times[j, :, 2] .< 0)
+            ax2.plot(BATCH_SIZES, times[j, :, 2]; label=solver, color=colors[j])
+            ax2.scatter(BATCH_SIZES, times[j, :, 2]; color=colors[j])
+        end
     end
-    multiplier += 1
-end
 
-ax.set_ylabel("Times (s)")
-ax.set_title("Basic LCP Unbatched")
-ax.set_xticks(xloc .+ width ./ 2, solvers)
-ax.legend(loc="upper right", ncols=3)
-fig.tight_layout()
-fig
+    ax1.set_ylabel("Times (s)")
+    ax1.set_xlabel("Batch Size")
+    ax2.set_xlabel("Batch Size")
+    ax1.legend(ncols=3)
+    ax2.legend(ncols=3)
+    fig.tight_layout()
+    fig
+end
 ```
 
-
+```julia, echo = false
+import SciMLBenchmarks
+SciMLBenchmarks.bench_footer(@__DIR__, @__FILE__)
+```
