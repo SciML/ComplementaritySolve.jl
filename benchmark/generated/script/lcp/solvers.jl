@@ -1,41 +1,27 @@
-# Benchmarking Available LCP Solvers
 
-```julia; echo = false
 import Pkg
 Pkg.activate(joinpath(@__DIR__, ".."))
-```
 
-## Useful Functions
 
-```julia
 using Statistics
 
-function timer(f, args...; numtimes::Int=10)
+function timer(f, args...; numtimes=5)
     f(args...) # compile
     times = zeros(numtimes)
-    for i in eachindex(times)
+    for i in 1:numtimes
         times[i] = @elapsed f(args...)
     end
     return median(times)
 end
-```
 
-## Load Dependencies
 
-```julia
 using BenchmarkTools, ComplementaritySolve, DataFrames, NonlinearSolve, PyPlot, StableRNGs
-```
 
-## Basic LCP
 
-```julia
 A₁ = [2.0 1; 1 2.0]
 q₁ = [-5.0, 6.0]
-```
 
-### Unbatched Version
 
-```julia
 SOLVERS = [BokhovenIterativeAlgorithm(),
     PGS(),
     RPGS(),
@@ -53,9 +39,8 @@ for (i, solver) in enumerate(SOLVERS)
     times[i, 1] = timer(solve, prob_iip, solver)
     times[i, 2] = timer(solve, prob_oop, solver)
 end
-```
 
-```julia, echo = false
+
 let _=plt.xkcd()
     xloc = 1:length(solvers)
     width = 0.4  # the width of the bars
@@ -84,15 +69,8 @@ let _=plt.xkcd()
     fig.tight_layout()
     fig
 end
-```
-
-### Batched Version
-
-Here we are batching the Problem with `N` starting values (typically batching LCPs involves
-batching multiple `M` and `q`)
 
 
-```julia
 SOLVERS = [BokhovenIterativeAlgorithm(),
     PGS(),
     RPGS(),
@@ -118,9 +96,8 @@ for (i, solver) in enumerate(SOLVERS)
         times[i, j, 1] = timer(solve, prob_iip, solver)
     end
 end
-```
 
-```julia, echo = false
+
 let _=plt.xkcd()
     prop_cycle = plt.rcParams["axes.prop_cycle"]
     colors = prop_cycle.by_key()["color"]
@@ -151,9 +128,8 @@ let _=plt.xkcd()
     fig.tight_layout()
     fig
 end
-```
 
-```julia, echo = false
+
 import SciMLBenchmarks
 SciMLBenchmarks.bench_footer(@__DIR__, last(splitdir(@__FILE__)))
-```
+

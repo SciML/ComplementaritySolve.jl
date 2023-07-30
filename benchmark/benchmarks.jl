@@ -1,5 +1,7 @@
 using Weave, SciMLBenchmarks
 
+SciMLBenchmarks.repo_directory = joinpath(@__DIR__, "generated")
+
 function findall_jmd_files(dir=@__DIR__)
     paths = String[]
     for p in readdir(dir)
@@ -14,4 +16,6 @@ end
 
 files = findall_jmd_files()
 
-foreach(f -> SciMLBenchmarks.weave(splitdir(f)..., (:script, :github, :pdf)), files)
+foreach(f -> SciMLBenchmarks.weave_file(splitdir(f)...,
+    (:script, :github)),
+    files)
