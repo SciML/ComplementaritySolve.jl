@@ -16,6 +16,4 @@ end
 
 files = findall_jmd_files()
 
-foreach(f -> SciMLBenchmarks.weave_file(splitdir(f)...,
-    (:script, :github)),
-    files)
+foreach(f -> SciMLBenchmarks.weave_file(splitdir(f)..., (:script, :github)), files)

@@ -46,7 +46,7 @@ end
     y_ = reshape(y, size(y, 1), 1, size(y, 2))
     x_ = reshape(x, size(x, 1), 1, size(x, 2))
     batched_mul!(y_, A, x_, α, β)
-    return y_[:, 1, :]
+    return dropdims(y_; dims=2)
 end
 
 ## Matmul with proper dispatches
@@ -92,4 +92,23 @@ function __check_correct_batching(args::Int...)
         return arg != 1 && arg != batch_size && throw(ArgumentError("Incorrect batching"))
     end
     return batch_size
+end
+
+# Pseudo Inverse
+I➕x⁻¹(x::AbstractMatrix) = pinv(I + x)
+@views function I➕x⁻¹(x::AbstractArray{T, 3}) where {T}
+    y = similar(x)
+    for i in 1:size(x, 3)
+        y[:, :, i] .= pinv(I + x[:, :, i])
+    end
+    return y
+end
+
+I➖x(x::AbstractMatrix) = I - x
+@views function I➖x(x::AbstractArray{T, 3}) where {T}
+    y = similar(x)
+    for i in 1:size(x, 3)
+        y[:, :, i] .= I - x[:, :, i]
+    end
+    return y
 end

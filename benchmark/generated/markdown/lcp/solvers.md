@@ -6,15 +6,24 @@
 ## Useful Functions
 
 ```julia
-using Statistics
+using CUDA, Statistics
 
-function timer(f, args...; numtimes=5)
+CUDA.allowscalar(false)
+
+iscuda(args...) = any(Base.Fix2(isa, CUDA.AnyCuArray), args)
+
+function timer(f, args...; numtimes::Int=10)
+    cuda_mode = iscuda(args...)
     f(args...) # compile
     times = zeros(numtimes)
-    for i in 1:numtimes
-        times[i] = @elapsed f(args...)
+    for i in eachindex(times)
+        if cuda_mode
+            times[i] = @elapsed CUDA.@sync f(args...)
+        else
+            times[i] = @elapsed f(args...)
+        end
     end
-    return median(times)
+    return minimum(times)
 end
 ```
 
@@ -52,7 +61,9 @@ q₁ = [-5.0, 6.0]
 
 
 
-### Unbatched Version
+### CPU Benchmarks
+
+#### Unbatched Version
 
 ```julia
 SOLVERS = [BokhovenIterativeAlgorithm(),
@@ -66,7 +77,7 @@ times = zeros(length(SOLVERS), 2)
 solvers = ["Bok.", "PGS", "RPGS", "IPM", "NLR (Newton)", "NLR (Broyden)"]
 
 for (i, solver) in enumerate(SOLVERS)
-    @info "UNBATCHED: Benchmarking $(solvers[i])"
+    @info "[CPU] UNBATCHED: Benchmarking $(solvers[i])"
     prob_iip = LCP{true}(A₁, q₁, rand(StableRNG(0), 2))
     prob_oop = LCP{false}(A₁, q₁, rand(StableRNG(0), 2))
     times[i, 1] = timer(solve, prob_iip, solver)
@@ -79,14 +90,14 @@ end
 
 
 
-### Batched Version
+#### Batched Version
 
 Here we are batching the Problem with `N` starting values (typically batching LCPs involves
 batching multiple `M` and `q`)
 
 
 ```julia
-SOLVERS = [BokhovenIterativeAlgorithm(),
+SOLVERS = [BokhovenIterativeAlgorithm(Broyden(; batched=true)),
     PGS(),
     RPGS(),
     InteriorPointMethod(),
@@ -99,7 +110,7 @@ times = zeros(length(SOLVERS), length(BATCH_SIZES), 2)
 solvers = ["Bok.", "PGS", "RPGS", "IPM", "NLR (Newton)", "NLR (DFSane)", "NLR (Broyden)"]
 
 for (i, solver) in enumerate(SOLVERS)
-    @info "BATCHED: Benchmarking $(solvers[i])"
+    @info "[CPU] BATCHED: Benchmarking $(solvers[i])"
     for (j, N) in enumerate(BATCH_SIZES)
         prob_iip = LCP{true}(A₁, q₁, rand(StableRNG(0), 2, N))
         prob_oop = LCP{false}(A₁, q₁, rand(StableRNG(0), 2, N))
@@ -117,6 +128,75 @@ end
 ![](figures/solvers_8_1.png)
 
 
+
+### CUDA Benchmarks
+
+```julia
+cuA₁ = [2.0 1; 1 2.0] |> cu
+cuq₁ = [-5.0, 6.0] |> cu
+```
+
+```
+2-element CUDA.CuArray{Float32, 1, CUDA.Mem.DeviceBuffer}:
+ -5.0
+  6.0
+```
+
+
+
+
+
+#### Unbatched Version
+
+```julia
+SOLVERS = [BokhovenIterativeAlgorithm(Broyden(; batched=true)),
+    # InteriorPointMethod(),
+    NonlinearReformulation(:smooth, Broyden(; batched=true)),
+]
+times = zeros(length(SOLVERS), 2)
+solvers = ["Bok.", "NLR (Broyden)"]
+
+for (i, solver) in enumerate(SOLVERS)
+    @info "[CUDA] UNBATCHED: Benchmarking $(solvers[i])"
+    prob_iip = LCP{true}(cuA₁, cuq₁, rand(StableRNG(0), 2) |> cu)
+    prob_oop = LCP{false}(cuA₁, cuq₁, rand(StableRNG(0), 2) |> cu)
+    times[i, 1] = timer(solve, prob_iip, solver)
+    times[i, 2] = timer(solve, prob_oop, solver)
+end
+```
+
+
+![](figures/solvers_11_1.png)
+
+
+
+#### Batched Version
+
+
+```julia
+SOLVERS = [BokhovenIterativeAlgorithm(Broyden(; batched=true)),
+    # InteriorPointMethod(),
+    NonlinearReformulation(:smooth, Broyden(; batched=true)),
+]
+BATCH_SIZES = 2 .^ (1:2:11)
+times = zeros(length(SOLVERS), length(BATCH_SIZES), 2)
+solvers = ["Bok.", "NLR (Broyden)"]
+
+for (i, solver) in enumerate(SOLVERS)
+    @info "[CUDA] BATCHED: Benchmarking $(solvers[i])"
+    for (j, N) in enumerate(BATCH_SIZES)
+        prob_iip = LCP{true}(cuA₁, cuq₁, rand(StableRNG(0), 2, N) |> cu)
+        prob_oop = LCP{false}(cuA₁, cuq₁, rand(StableRNG(0), 2, N) |> cu)
+        times[i, j, 2] = timer(solve, prob_oop, solver)
+        times[i, j, 1] = timer(solve, prob_iip, solver)
+    end
+end
+```
+
+
+![](figures/solvers_13_1.png)
+
+
 ## Appendix
 
 These benchmarks are a part of the SciMLBenchmarks.jl repository, found at: [https://github.com/SciML/SciMLBenchmarks.jl](https://github.com/SciML/SciMLBenchmarks.jl). For more information on high-performance scientific machine learning, check out the SciML Open Source Software Organization [https://sciml.ai](https://sciml.ai).
@@ -131,15 +211,15 @@ SciMLBenchmarks.weave_file("/mnt/research/ComplementaritySolve.jl/benchmark/lcp"
 Computer Information:
 
 ```
-Julia Version 1.10.0-beta1
-Commit 6616549950e (2023-07-25 17:43 UTC)
+Julia Version 1.9.2
+Commit e4ee485e909 (2023-07-05 09:39 UTC)
 Platform Info:
   OS: Linux (x86_64-linux-gnu)
   CPU: 12 × AMD Ryzen 5 4600H with Radeon Graphics
   WORD_SIZE: 64
   LIBM: libopenlibm
-  LLVM: libLLVM-15.0.7 (ORCJIT, znver2)
-  Threads: 11 on 12 virtual cores
+  LLVM: libLLVM-14.0.6 (ORCJIT, znver2)
+  Threads: 8 on 12 virtual cores
 Environment:
   JULIA_PKG_USE_CLI_GIT = true
   JULIA_DEPOT_PATH = /mnt/julia:
@@ -151,6 +231,7 @@ Package Information:
 ```
 Status `/mnt/research/ComplementaritySolve.jl/benchmark/Project.toml`
   [6e4b80f9] BenchmarkTools v1.3.2
+  [052768ef] CUDA v4.4.0
   [b40a91a3] ComplementaritySolve v0.1.0 `..`
   [a93c6f00] DataFrames v1.6.1
   [8913a72c] NonlinearSolve v1.8.0
@@ -176,11 +257,14 @@ Status `/mnt/research/ComplementaritySolve.jl/benchmark/Manifest.toml`
   [30b0a656] ArrayInterfaceCore v0.1.29
   [a9b6321e] Atomix v0.1.0
   [13072b0f] AxisAlgorithms v1.0.1
+  [ab4f0b2a] BFloat16s v0.4.2
   [6e4b80f9] BenchmarkTools v1.3.2
   [d1d4a3ce] BitFlags v0.1.7
   [62783981] BitTwiddlingConvenienceFunctions v0.1.5
   [fa961155] CEnum v0.4.2
   [2a0fbf3d] CPUSummary v0.2.3
+  [052768ef] CUDA v4.4.0
+  [1af6417a] CUDA_Runtime_Discovery v0.2.2
   [49dc2e85] Calculus v0.5.1
   [082447d4] ChainRules v1.53.0
   [d360d2e6] ChainRulesCore v1.16.0
@@ -232,6 +316,7 @@ Status `/mnt/research/ComplementaritySolve.jl/benchmark/Manifest.toml`
   [77dc65aa] FunctionWrappersWrappers v0.1.3
   [0c68f7d7] GPUArrays v8.8.1
   [46192b85] GPUArraysCore v0.1.5
+  [61eb1bfa] GPUCompiler v0.21.4
   [28b8d3ca] GR v0.72.9
 ⌃ [d7ba0133] Git v1.2.1
   [86223c79] Graphs v1.8.0
@@ -302,6 +387,8 @@ Status `/mnt/research/ComplementaritySolve.jl/benchmark/Manifest.toml`
   [438e738f] PyCall v1.96.1
   [d330b81b] PyPlot v2.11.1
   [1fd47b50] QuadGK v2.8.2
+  [74087812] Random123 v1.6.1
+  [e6cf234a] RandomNumbers v1.5.3
   [c84ed2f1] Ratios v0.4.5
   [c1ae055f] RealDot v0.1.0
   [3cdcf5f2] RecipesBase v1.3.4
@@ -350,6 +437,7 @@ Status `/mnt/research/ComplementaritySolve.jl/benchmark/Manifest.toml`
   [bd369af6] Tables v1.10.1
   [62fd8b95] TensorCore v0.1.1
   [8290d209] ThreadingUtilities v0.5.2
+  [a759f4b9] TimerOutputs v0.5.23
   [3bb67fe8] TranscodingStreams v0.9.13
   [d5829a12] TriangularSolve v0.1.19
   [410a4b4d] Tricks v0.1.7
@@ -374,6 +462,8 @@ Status `/mnt/research/ComplementaritySolve.jl/benchmark/Manifest.toml`
   [700de1a5] ZygoteRules v0.2.3
 ⌅ [68821587] Arpack_jll v3.5.1+1
   [6e34b625] Bzip2_jll v1.0.8+0
+  [4ee394cb] CUDA_Driver_jll v0.5.0+1
+  [76a88914] CUDA_Runtime_jll v0.6.0+0
   [83423d85] Cairo_jll v1.16.1+1
   [2e619515] Expat_jll v2.5.0+0
   [b22a6f82] FFMPEG_jll v4.4.2+2
