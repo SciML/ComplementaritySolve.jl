@@ -33,6 +33,25 @@ const AA3 = AbstractArray{T, 3} where {T}
 ### ----- Type Piracy Starts ----- ###
 ArrayInterfaceCore.can_setindex(::Type{<:AbstractFill}) = false
 ArrayInterfaceCore.can_setindex(::Zygote.OneElement) = false
+
+import LinearSolve: DefaultLinearSolver, DefaultAlgorithmChoice
+
+function LinearSolve.defaultalg(A::SciMLBase.AbstractSciMLOperator,
+    b::LinearSolve.GPUArraysCore.AbstractGPUArray,
+    assump::LinearSolve.OperatorAssumptions)
+    if has_ldiv!(A)
+        return DefaultLinearSolver(DefaultAlgorithmChoice.DirectLdiv!)
+    elseif !assump.issq
+        m, n = size(A)
+        if m < n
+            DefaultLinearSolver(DefaultAlgorithmChoice.KrylovJL_CRAIGMR)
+        else
+            DefaultLinearSolver(DefaultAlgorithmChoice.KrylovJL_LSMR)
+        end
+    else
+        DefaultLinearSolver(DefaultAlgorithmChoice.KrylovJL_GMRES)
+    end
+end
 ### ------ Type Piracy Ends ------ ###
 
 abstract type AbstractComplementarityAlgorithm end

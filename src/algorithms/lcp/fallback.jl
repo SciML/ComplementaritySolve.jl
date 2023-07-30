@@ -1,4 +1,5 @@
-@views function __solve(prob::LinearComplementarityProblem{iip, true},
+# Can't use views here because it fails for some downstream solvers
+function __solve(prob::LinearComplementarityProblem{iip, true},
     solver::AbstractComplementarityAlgorithm,
     u0,
     M,
