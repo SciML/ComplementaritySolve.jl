@@ -8,13 +8,19 @@ Pkg.activate(joinpath(@__DIR__, ".."))
 ## Useful Functions
 
 ```julia
-using Statistics
+using CUDA, Statistics
 
-function timer(f, args...; numtimes::Int=10)
+CUDA.allowscalar(false)
+
+function timer(f, args...; cuda_mode::Bool=false, numtimes::Int=10)
     f(args...) # compile
     times = zeros(numtimes)
     for i in eachindex(times)
-        times[i] = @elapsed f(args...)
+        if cuda_mode
+            times[i] = @elapsed CUDA.@sync f(args...)
+        else
+            times[i] = @elapsed f(args...)
+        end
     end
     return median(times)
 end
@@ -33,7 +39,9 @@ A₁ = [2.0 1; 1 2.0]
 q₁ = [-5.0, 6.0]
 ```
 
-### Unbatched Version
+### CPU Benchmarks
+
+#### Unbatched Version
 
 ```julia
 SOLVERS = [BokhovenIterativeAlgorithm(),
@@ -86,7 +94,7 @@ let _=plt.xkcd()
 end
 ```
 
-### Batched Version
+#### Batched Version
 
 Here we are batching the Problem with `N` starting values (typically batching LCPs involves
 batching multiple `M` and `q`)
@@ -152,6 +160,8 @@ let _=plt.xkcd()
     fig
 end
 ```
+
+### GPU Benchmarks (CUDA)
 
 ```julia, echo = false
 import SciMLBenchmarks

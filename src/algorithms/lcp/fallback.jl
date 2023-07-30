@@ -21,7 +21,7 @@ function __solve(prob::LinearComplementarityProblem{iip, true},
     return_codes = Vector{ReturnCode.T}(undef, size(u0, 2))
     return_codes[1] = sol_first.retcode
 
-    Threads.@threads :static for i in 1:size(u0, 2)
+    Threads.@threads for i in 1:size(u0, 2)
         sol = __solve(ℒ𝒞𝒫,
             solver,
             u0[:, mod1(i, size(u0, 2))],
