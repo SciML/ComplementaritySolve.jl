@@ -167,7 +167,7 @@ rng = StableRNG(0)
             ]
 
             for (i, (M, q)) in enumerate(test_data)
-                prob = LinearComplementarityProblem(M, q, rand(length(q)))
+                prob = LinearComplementarityProblem(M, q, rand(StableRNG(0),length(q)))
                 sol = solve(prob, PGS())
                 @test all(isfinite, sol.u)
             end
@@ -188,7 +188,7 @@ rng = StableRNG(0)
                 ]
 
                 for (i, (M, q)) in enumerate(test_data)
-                    prob = LinearComplementarityProblem(M, q, rand(length(q)))
+                    prob = LinearComplementarityProblem(M, q, rand(StableRNG(0),length(q)))
                     sol = solve(prob, NonlinearReformulation())
                     @test all(isfinite, sol.u)
                 end
@@ -214,7 +214,7 @@ rng = StableRNG(0)
                 ]
 
                 for (i, (M, q)) in enumerate(test_data)
-                    prob = LinearComplementarityProblem(M, q, rand(length(q)))
+                    prob = LinearComplementarityProblem(M, q, rand(StableRNG(0),length(q)))
                     sol = solve(prob,
                         NonlinearReformulation(:smooth, Broyden(; batched=true)))
                     @test all(isfinite, sol.u)
