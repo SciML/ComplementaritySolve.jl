@@ -24,7 +24,8 @@ function __make_ipm_linsolve_operator(M, zₖ, wₖ, Δzw, ::Val{batched}) where
             u = reshape(u, 2L, :)
         end
         Δz, Δw = selectdim(u, 1, 1:L), selectdim(u, 1, (L + 1):(2L))
-        selectdim(v, 1, 1:L) .= matmul(M, Δz) .- Δw
+        selectdim(v, 1, 1:L) .= Δw
+        matmul!(selectdim(v, 1, 1:L), M, Δz, true, -1)
         selectdim(v, 1, (L + 1):(2L)) .= zₖ .* Δw .+ wₖ .* Δz
         return vec(v)
     end

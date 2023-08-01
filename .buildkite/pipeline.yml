@@ -20,7 +20,7 @@ steps:
               exit(1)
           end'
 
-  - label: ":julia: Julia {{matrix.julia}} (CPU)"
+  - label: ":julia: Julia {{matrix.julia}} {{matrix.backend}}"
     plugins:
       - JuliaCI/julia#v1:
           version: "{{matrix.julia}}"
@@ -33,7 +33,7 @@ steps:
     agents:
       queue: "default"
     env:
-      GROUP: "CPU"
+      BACKEND_GROUP: "{{matrix.backend}}"
     if: build.message !~ /\[skip tests\]/
     timeout_in_minutes: 240
     matrix:
@@ -41,6 +41,8 @@ steps:
         julia:
           - "1"
           - "nightly"
+        backend:
+          - "CPU"
       adjustments:
         - with:
             julia: "nightly"
