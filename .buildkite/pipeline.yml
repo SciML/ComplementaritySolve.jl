@@ -20,7 +20,7 @@ steps:
               exit(1)
           end'
 
-  - label: ":julia: Julia {{matrix.julia}} (CPU)"
+  - label: ":julia: Julia {{matrix.julia}} {{matrix.backend}} Test: {{matrix.testing}}"
     plugins:
       - JuliaCI/julia#v1:
           version: "{{matrix.julia}}"
@@ -33,18 +33,25 @@ steps:
     agents:
       queue: "default"
     env:
-      GROUP: "CPU"
+      BACKEND_GROUP: "{{matrix.backend}}"
+      TESTING_GROUP: "{{matrix.testing}}"
     if: build.message !~ /\[skip tests\]/
     timeout_in_minutes: 240
     matrix:
       setup:
         julia:
           - "1"
-          - "nightly"
-      adjustments:
-        - with:
-            julia: "nightly"
-          soft_fail: true
+          # - "nightly"
+        backend:
+          - "CPU"
+        testing:
+          - "Core"
+          - "Applications"
+          - "QA"
+      # adjustments:
+      #   - with:
+      #       julia: "nightly"
+      #     soft_fail: true
 
 env:
   CODECOV_TOKEN: "ea921ebe-5b71-4944-a2c4-d019f95d5024" # Someday I will regret doing this

@@ -5,7 +5,8 @@ module ComplementaritySolve
 # Before release we will clean things up
 
 ## Core / QOL Dependencies
-using ArrayInterfaceCore, ChainRulesCore, CommonSolve, ConcreteStructs, SciMLBase
+using ArrayInterfaceCore, ChainRulesCore, GPUArraysCore, SciMLBase
+using CommonSolve, ConcreteStructs
 ## Stdlibs
 using LinearAlgebra, Markdown, SparseArrays
 ## SciML Dependencies
@@ -33,6 +34,27 @@ const AA3 = AbstractArray{T, 3} where {T}
 ### ----- Type Piracy Starts ----- ###
 ArrayInterfaceCore.can_setindex(::Type{<:AbstractFill}) = false
 ArrayInterfaceCore.can_setindex(::Zygote.OneElement) = false
+
+import LinearSolve: DefaultLinearSolver, DefaultAlgorithmChoice
+
+#### To be Upstreamed
+function LinearSolve.defaultalg(A::SciMLBase.AbstractSciMLOperator,
+    b::GPUArraysCore.AbstractGPUArray,
+    assump::LinearSolve.OperatorAssumptions)
+    alg_choice = if has_ldiv!(A)
+        DefaultAlgorithmChoice.DirectLdiv!
+    elseif !assump.issq
+        m, n = size(A)
+        if m < n
+            DefaultAlgorithmChoice.KrylovJL_CRAIGMR
+        else
+            DefaultAlgorithmChoice.KrylovJL_LSMR
+        end
+    else
+        return DefaultAlgorithmChoice.KrylovJL_GMRES
+    end
+    return DefaultLinearSolver(alg_choice)
+end
 ### ------ Type Piracy Ends ------ ###
 
 abstract type AbstractComplementarityAlgorithm end

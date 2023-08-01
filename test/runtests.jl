@@ -1,34 +1,54 @@
 using SafeTestsets, Test
 
+const BACKEND_GROUP = uppercase(get(ENV, "BACKEND_GROUP", "All"))
+const TESTING_GROUP = uppercase(get(ENV, "TESTING_GROUP", "All"))
+
+macro testif(group, val, expr)
+    return quote
+        if ($(esc(group)) == "ALL") || $(esc(group)) == uppercase($(esc(val)))
+            @testset "$(g)" for g in ($(esc(group)),)
+                $(esc(expr))
+            end
+        end
+    end
+end
+
+@info "Running tests for $(BACKEND_GROUP) backend"
+@info "Running tests for $(TESTING_GROUP) group"
+
 @testset "Complementarity Solve" begin
-    @testset "Core" begin
-        @safetestset "Linear Complementarity Problems" begin
-            include("core/lcp.jl")
-        end
-        @safetestset "Mixed Complementarity Problems" begin
-            include("core/mcp.jl")
-        end
-    end
-
-    @testset "Applications" begin
-        @testset "Differentiable Controller Learning" begin
-            # @safetestset "Cartpole" begin
-            #     include("applications/control_learning/cartpole.jl")
-            # end
-
-            @safetestset "Acrobot with Soft Joint Limits" begin
-                include("applications/control_learning/soft_joint_acrobot.jl")
+    @testif TESTING_GROUP "Core" begin
+        @testif BACKEND_GROUP "CPU" begin
+            @safetestset "Linear Complementarity Problems" begin
+                include("core/lcp.jl")
             end
-            @safetestset "Cart Pole with Soft Walls" begin
-                include("applications/control_learning/cartpole.jl")
-            end
-            @safetestset "Partial State Feedback" begin
-                include("applications/control_learning/partial_state_feedback.jl")
+            @safetestset "Mixed Complementarity Problems" begin
+                include("core/mcp.jl")
             end
         end
     end
 
-    @safetestset "Aqua Quality Assurance" begin
-        include("core/aqua.jl")
+    @testif TESTING_GROUP "Applications" begin
+        @testif BACKEND_GROUP "CPU" begin
+            @testset "Differentiable Controller Learning" begin
+                @safetestset "Acrobot with Soft Joint Limits" begin
+                    include("applications/control_learning/soft_joint_acrobot.jl")
+                end
+                @safetestset "Cart Pole with Soft Walls" begin
+                    include("applications/control_learning/cartpole.jl")
+                end
+                @safetestset "Partial State Feedback" begin
+                    include("applications/control_learning/partial_state_feedback.jl")
+                end
+            end
+        end
+    end
+
+    @testif TESTING_GROUP "QA" begin
+        @testif BACKEND_GROUP "CPU" begin
+            @safetestset "Aqua Quality Assurance" begin
+                include("core/aqua.jl")
+            end
+        end
     end
 end
