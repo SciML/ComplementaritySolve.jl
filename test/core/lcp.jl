@@ -166,8 +166,8 @@ rng = StableRNG(0)
                     q=[-126.0, -124.0, -120.0, -112.0, -96.0, -64.0]), #lcp_exp_murty2.dat
             ]
 
-            for (i, (M, q)) in enumerate(test_data)
-                prob = LinearComplementarityProblem(M, q, rand(StableRNG(0),length(q)))
+            for (M, q) in test_data
+                prob = LinearComplementarityProblem(M, q, rand(StableRNG(0), length(q)))
                 sol = solve(prob, PGS())
                 @test all(isfinite, sol.u)
             end
@@ -187,8 +187,8 @@ rng = StableRNG(0)
                         q=[-1.0, -1.0, -1.0, -1.0]), #lcp_cps_3.dat
                 ]
 
-                for (i, (M, q)) in enumerate(test_data)
-                    prob = LinearComplementarityProblem(M, q, rand(StableRNG(0),length(q)))
+                for (M, q) in test_data
+                    prob = LinearComplementarityProblem(M, q, rand(StableRNG(0), length(q)))
                     sol = solve(prob, NonlinearReformulation())
                     @test all(isfinite, sol.u)
                 end
@@ -213,8 +213,8 @@ rng = StableRNG(0)
                         -1.0 0.0 0.0], q=[0.0, -1.0, 1.0]), #lcp_pang_isolated_sol.dat
                 ]
 
-                for (i, (M, q)) in enumerate(test_data)
-                    prob = LinearComplementarityProblem(M, q, rand(StableRNG(0),length(q)))
+                for (M, q) in test_data
+                    prob = LinearComplementarityProblem(M, q, rand(StableRNG(0), length(q)))
                     sol = solve(prob,
                         NonlinearReformulation(:smooth, Broyden(; batched=true)))
                     @test all(isfinite, sol.u)
