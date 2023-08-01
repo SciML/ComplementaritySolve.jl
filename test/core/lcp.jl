@@ -135,4 +135,91 @@ rng = StableRNG(0)
             end
         end
     end
+
+    @testset "Convergence Test" begin
+        #taken from https://github.com/siconos/siconos/tree/master/numerics/src/LCP/test/data
+        @testset "Test PGS" begin
+            test_data = [
+                (; M=[1.0 1.0;
+                    1.0 1.0], q=[-1.0, -1.0]),
+                (; M=[1.0 -1.0;
+                    -1.0 1.0], q=[1.0, -1.0]),#lcp_cps_5.dat
+                (;
+                    M=[2.000000000000000000000000e+00 1.000000000000000000000000e+00;
+                        1.000000000000000000000000e+00 2.000000000000000000000000e+00],
+                    q=[-5.000000000000000000000000e+00, -6.000000000000000000000000e+00]),#lcp_deudeu.dat
+                (;
+                    M=[1.0 0.0 0.0 0.0 0.0 0.0;
+                        2.0 1.0 0.0 0.0 0.0 0.0;
+                        2.0 2.0 1.0 0.0 0.0 0.0;
+                        2.0 2.0 2.0 1.0 0.0 0.0;
+                        2.0 2.0 2.0 2.0 1.0 0.0;
+                        2.0 2.0 2.0 2.0 2.0 1.0],
+                    q=[-1.0, -1.0, -1.0, -1.0, -1.0, -1.0]),#lcp_exp_murty.dat
+                (;
+                    M=[1.0 0.0 0.0 0.0 0.0 0.0;
+                        2.0 1.0 0.0 0.0 0.0 0.0;
+                        2.0 2.0 1.0 0.0 0.0 0.0;
+                        2.0 2.0 2.0 1.0 0.0 0.0;
+                        2.0 2.0 2.0 2.0 1.0 0.0;
+                        2.0 2.0 2.0 2.0 2.0 1.0],
+                    q=[-126.0, -124.0, -120.0, -112.0, -96.0, -64.0]), #lcp_exp_murty2.dat
+            ]
+
+            for (i, (M, q)) in enumerate(test_data)
+                prob = LinearComplementarityProblem(M, q, rand(length(q)))
+                sol = solve(prob, PGS())
+                @test all(isfinite, sol.u)
+            end
+        end
+
+        @testset "NonlinearReformulation" begin
+            @testset "Netwon-Raphson" begin
+                test_data = [
+                    (; M=[0.0 2.0 -1.0;
+                        -1.0 0.0 1.0;
+                        2.0 -2.0 0.0], q=[-3.0, 6.0, -1.0]), #lcp_cps_2.dat
+                    (;
+                        M=[0.0 0.0 10.0 30.0;
+                            0.0 0.0 20.0 15.0;
+                            10.0 30.0 0.0 0.0;
+                            20.0 15.0 0.0 0.0],
+                        q=[-1.0, -1.0, -1.0, -1.0]), #lcp_cps_3.dat
+                ]
+
+                for (i, (M, q)) in enumerate(test_data)
+                    prob = LinearComplementarityProblem(M, q, rand(length(q)))
+                    sol = solve(prob, NonlinearReformulation())
+                    @test all(isfinite, sol.u)
+                end
+            end
+
+            @testset "Broyden" begin
+                test_data = [
+                    (;
+                        M=[11.0 0.0 10.0 1.0;
+                            0.0 11.0 10.0 1.0;
+                            10.0 10.0 21.0 1.0;
+                            -1.0 -1.0 -1.0 0.0],
+                        q=[50.0, 50.0, 10.0, -6.0]),#lcp_cps_4.dat
+                    (;
+                        M=[11.0 0.0 10.0 1.0;
+                            0.0 11.0 10.0 1.0;
+                            10.0 10.0 21.0 1.0;
+                            -1.0 -1.0 -1.0 0.0],
+                        q=[50.0, 50.0, 23.0, -6.0]),#lcp_cps_4bis.dat
+                    (; M=[0.0 1.0 -1.0;
+                        -1.0 0.0 0.0;
+                        -1.0 0.0 0.0], q=[0.0, -1.0, 1.0]), #lcp_pang_isolated_sol.dat
+                ]
+
+                for (i, (M, q)) in enumerate(test_data)
+                    prob = LinearComplementarityProblem(M, q, rand(length(q)))
+                    sol = solve(prob,
+                        NonlinearReformulation(:smooth, Broyden(; batched=true)))
+                    @test all(isfinite, sol.u)
+                end
+            end
+        end
+    end
 end
