@@ -211,7 +211,7 @@ include("utils.jl")
             end
 
             @testset "IPM Test" begin
-                file_names = [@joinpath(@__DIR__, "data/lcp_trivial.dat")]
+                file_names = [joinpath(@__DIR__, "data/lcp_trivial.dat")]
                 test_positive = [parse_data(file_name) for file_name in file_names]
                 for (M, q) in test_positive
                     prob = LinearComplementarityProblem(M, q)
