@@ -142,60 +142,107 @@ include("utils.jl")
         #taken from https://github.com/siconos/siconos/tree/master/numerics/src/LCP/test/data
         @testset "Test PGS" begin
             file_names = [
-                "./data/lcp_CPS_5.dat",
-                "./data/lcp_CPS_5.dat",
-                "./data/lcp_exp_murty.dat",
-                "./data/lcp_exp_murty2.dat",
+                joinpath(@__DIR__, "data/lcp_CPS_1.dat"),
+                joinpath(@__DIR__, "data/lcp_CPS_5.dat"),
+                joinpath(@__DIR__, "data/lcp_exp_murty.dat"),
+                joinpath(@__DIR__, "data/lcp_exp_murty2.dat"),
+                joinpath(@__DIR__, "data/lcp_deudeu.dat"),
             ]
             test_data = [parse_data(file_name) for file_name in file_names]
             for (M, q) in test_data
-                prob = LinearComplementarityProblem(M, q, rand(rng, length(q)))
+                prob = LinearComplementarityProblem(M, q)
                 sol = solve(prob, PGS())
-                @test all(isfinite, sol.u)
+                @test all(>=(-1e-5), sol.u)
+                w = M * sol.u .+ q
+                @test (w' * sol.u)≈0.0 atol=1e-6
             end
         end
 
         @testset "NonlinearReformulation" begin
             @testset "Netwon-Raphson" begin
-                file_names = ["./data/lcp_ortiz.dat", "./data/lcp_CPS_2.dat"]
+                file_names = [
+                    joinpath(@__DIR__, "data/lcp_CPS_2.dat"),
+                    joinpath(@__DIR__, "data/lcp_CPS_3.dat"),
+                    joinpath(@__DIR__, "data/lcp_ortiz.dat"),
+                ]
                 test_data = [parse_data(file_name) for file_name in file_names]
                 for (M, q) in test_data
-                    prob = LinearComplementarityProblem(M, q, rand(rng, length(q)))
+                    prob = LinearComplementarityProblem(M, q)
                     sol = solve(prob, NonlinearReformulation())
-                    @test all(isfinite, sol.u)
+                    @test all(>=(-1e-5), sol.u)
+                    w = M * sol.u .+ q
+                    @test (w' * sol.u)≈0.0 atol=1e-6
                 end
             end
 
             @testset "Broyden" begin
                 file_names = [
-                    "./data/lcp_CPS_3.dat",
-                    "./data/lcp_CPS_4.dat",
-                    "./data/lcp_CPS_4bis.dat",
-                    "./data/lcp_Pang_isolated_sol.dat",
-                    "./data/lcp_Pang_isolated_sol_perturbed.dat",
+                    joinpath(@__DIR__, "data/lcp_CPS_3.dat"),
+                    joinpath(@__DIR__, "data/lcp_enum_fails.dat"),
                 ]
                 test_data = [parse_data(file_name) for file_name in file_names]
 
                 for (M, q) in test_data
-                    prob = LinearComplementarityProblem(M, q, rand(rng, length(q)))
+                    prob = LinearComplementarityProblem(M, q)
                     sol = solve(prob,
                         NonlinearReformulation(:smooth, Broyden(; batched=true)))
-                    @test all(isfinite, sol.u)
+                    @test all(>=(-1e-5), sol.u)
+                    w = M * sol.u .+ q
+                    @test (w' * sol.u)≈0.0 atol=1e-6
                 end
             end
         end
 
-        @testset "BokhovenIterative and IPM test" begin
-            file_names = ["./data/lcp_trivial.dat", "./data/lcp_mmc.dat"]
-            test_positive = [parse_data(file_name) for file_name in file_names]
-            solvers = [BokhovenIterativeAlgorithm(), InteriorPointMethod()]
+        @testset "Positive Definite Problems" begin
+            @testset "BokhovenIterative Test" begin
+                file_names = [
+                    joinpath(@__DIR__, "data/lcp_trivial.dat"),
+                    joinpath(@__DIR__, "data/lcp_mmc.dat"),
+                ]
+                test_positive = [parse_data(file_name) for file_name in file_names]
+                for (M, q) in test_positive
+                    prob = LinearComplementarityProblem(M, q)
+                    sol = solve(prob, BokhovenIterativeAlgorithm())
 
-            for (M, q) in test_positive
-                prob = LinearComplementarityProblem(M, q, rand(rng, length(q)))
-                for solver in solvers
-                    sol = solve(prob, solver)
-                    @test all(isfinite, sol.u)
+                    @test all(>=(-1e-5), sol.u)
+                    w = M * sol.u .+ q
+                    @test (w' * sol.u)≈0.0 atol=1e-6
                 end
+            end
+
+            @testset "IPM Test" begin
+                file_names = [@joinpath(@__DIR__, "data/lcp_trivial.dat")]
+                test_positive = [parse_data(file_name) for file_name in file_names]
+                for (M, q) in test_positive
+                    prob = LinearComplementarityProblem(M, q)
+                    sol = solve(prob, InteriorPointMethod())
+
+                    @test all(>=(-1e-5), sol.u)
+                    w = M * sol.u .+ q
+                    @test (w' * sol.u)≈0.0 atol=1e-6
+                end
+            end
+        end
+
+        @testset "PATHSolver Test" begin
+            diff_files = [
+                joinpath(@__DIR__, "data/lcp_Pang_isolated_sol.dat"),
+                joinpath(@__DIR__, "data/lcp_Pang_isolated_sol_perturbed.dat"),
+            ]
+            diff_problems = [parse_data(file_name) for file_name in diff_files]
+
+            f(z, θ) = θ.M * z .+ θ.q
+
+            for (M, q) in diff_problems
+                θ = ComponentArray(; M=M, q=q)
+                lb = [-Inf for i in 1:length(q)]
+                ub = [Inf for i in 1:length(q)]
+                u0 = rand(rng, length(q))
+                prob = MCP(f, u0, lb, ub, θ)
+                sol = solve(prob, PATHSolverAlgorithm())
+                @test all(>=(-1e-5), sol.u)
+                w = M * sol.u .+ q
+                @test (w' * sol.u)≈0.0 atol=1e-3 #slightly difficult problems to solve
             end
         end
     end
