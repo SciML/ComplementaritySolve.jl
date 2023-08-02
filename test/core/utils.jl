@@ -8,7 +8,7 @@ function parse_data(filename)
     for i in 1:m
         temp_line = split(file_lines[i + 1], " ")
         new_row = parse.(Float64, filter(!=(""), temp_line))
-        M[:, i] .= new_row
+        M[i, :] .= new_row
     end
 
     temp_line = split(file_lines[end], " ")
