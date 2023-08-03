@@ -1,4 +1,4 @@
-function parse_data(filename)
+function parse_lcp_data(filename)
     file_lines = readlines(filename)
     dim_line = split(file_lines[1], " ")
     m, n = parse.(Int64, dim_line)
