@@ -226,7 +226,7 @@ include("utils.jl")
 
         @testset "Broken tests" begin
             diff_files = [
-                joinpath(@__DIR__, "data/lcp_cps_4.dat"),
+                joinpath(@__DIR__, "data/lcp_CPS_4.dat"),
                 joinpath(@__DIR__, "data/lcp_CPS_4bis.dat"),
                 joinpath(@__DIR__, "data/lcp_Pang_isolated_sol.dat"),
                 joinpath(@__DIR__, "data/lcp_Pang_isolated_sol_perturbed.dat"),
