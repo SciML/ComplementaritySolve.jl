@@ -69,13 +69,13 @@ for batched in (true, false)
 
         # Setup Linsolve
         Δzw = similar(z, 2L, N)
-        A_ = __make_ipm_linsolve_operator(M, z, w, Δzw, Val($batched))
+        A_ = __make_ipm_linsolve_operator(M, z, w, vec(Δzw), Val($batched))
         b_ = similar(z, 2L, N)
         lincache = init(LinearProblem(A_, vec(b_); u0=vec(Δzw)), alg.linsolve; kwargs...)
 
         iter = 1
         while τ > η && ρ > η && iter ≤ maxiters
-            lincache.A = __make_ipm_linsolve_operator(M, z, w, Δzw, Val($batched))
+            lincache.A = __make_ipm_linsolve_operator(M, z, w, vec(Δzw), Val($batched))
             selectdim(b_, 1, 1:L) .= w .- w_cache
             selectdim(b_, 1, (L + 1):(2L)) .= σ * τ .- z .* w
             lincache.b = vec(b_)
