@@ -42,9 +42,7 @@ rng = StableRNG(0)
         @testset "Adjoint Tests" begin
             function loss_function(θ, solver)
                 prob = MCP(f, u0, lower_bound, upper_bound, θ)
-                sol = solve(prob,
-                    solver;
-                    sensealg=MixedComplementarityAdjoint(),
+                sol = solve(prob, solver; sensealg=MixedComplementarityAdjoint(),
                     verbose=false)
                 return sum(sol.u)
             end
@@ -55,8 +53,7 @@ rng = StableRNG(0)
 
             θ = [2.0, -3.0]
             ∂θ_zygote = only(Zygote.gradient(loss_function_path, θ))
-            (∂θ_finitediff,) = FiniteDifferences.grad(central_fdm(3, 1),
-                loss_function_path,
+            (∂θ_finitediff,) = FiniteDifferences.grad(central_fdm(3, 1), loss_function_path,
                 θ)
             # FD cant differentiate through the PATH solver (C Code)
             ∂θ_forwarddiff = ForwardDiff.gradient(loss_function_nr, θ)

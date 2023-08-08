@@ -1,9 +1,5 @@
-function solve(prob::AbstractComplementarityProblem,
-    args...;
-    sensealg=nothing,
-    u0=nothing,
-    p=nothing,
-    kwargs...)
+function solve(prob::AbstractComplementarityProblem, args...; sensealg=nothing, u0=nothing,
+    p=nothing, kwargs...)
     u0 = u0 !== nothing ? u0 : prob.u0
     p = p !== nothing ? p : prob.p
     sensealg = sensealg === nothing ? __default_sensealg(prob) : sensealg
@@ -11,13 +7,8 @@ function solve(prob::AbstractComplementarityProblem,
     return __solve(prob, sensealg, solver, u0, p, args_...; kwargs...)
 end
 
-function solve(prob::AbstractLinearComplementarityProblem,
-    args...;
-    sensealg=nothing,
-    u0=nothing,
-    M=nothing,
-    q=nothing,
-    kwargs...)
+function solve(prob::AbstractLinearComplementarityProblem, args...; sensealg=nothing,
+    u0=nothing, M=nothing, q=nothing, kwargs...)
     u0 = u0 !== nothing ? u0 : prob.u0
     M = M !== nothing ? M : prob.M
     q = q !== nothing ? q : prob.q
@@ -54,21 +45,17 @@ __default_solver(::MixedComplementarityProblem) = NonlinearReformulation()
 
 # Algorithms should dispatch on __solve
 function __solve end
+function __solve_adjoint end
 
 function __solve(prob::AbstractComplementarityProblem,
-    sensealg::Union{Nothing, AbstractComplementaritySensitivityAlgorithm},
-    args...;
+    sensealg::Union{Nothing, AbstractComplementaritySensitivityAlgorithm}, args...;
     kwargs...)
     return __solve(prob, args...; kwargs...)
 end
 
 ## Dispatch only if using SensitivityAlgorithm else differentiate through the solve
-function CRC.rrule(::typeof(__solve),
-    prob::AbstractComplementarityProblem,
-    sensealg::AbstractComplementaritySensitivityAlgorithm,
-    solver,
-    args...;
-    kwargs...)
+function CRC.rrule(::typeof(__solve), prob::AbstractComplementarityProblem,
+    sensealg::AbstractComplementaritySensitivityAlgorithm, solver, args...; kwargs...)
     sol = __solve(prob, solver, args...; kwargs...)
     function ∇__solve(∂sol)
         ∂p = __solve_adjoint(prob, sensealg, sol, ∂sol, args...; kwargs...)

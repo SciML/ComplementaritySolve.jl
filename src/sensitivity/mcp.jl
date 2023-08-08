@@ -17,19 +17,14 @@ function __fixed_vecjac_operator(f, y, p, A₁, A₂)
     return FunctionOperator(f_operator!, vec(input), vec(output))
 end
 
-@views function __solve_adjoint(prob::MixedComplementarityProblem{iip},
-    sensealg::MixedComplementarityAdjoint,
-    sol,
-    ∂sol,
-    u0,
-    p;
-    kwargs...) where {iip}
+@views function __solve_adjoint(prob::MixedComplementarityProblem,
+    sensealg::MixedComplementarityAdjoint, sol, ∂sol, u0, p; kwargs...)
     (__notangent(∂sol) || __notangent(∂sol.u)) && return (∂∅,)
 
     (; f, lb, ub) = prob
     u, ∂u = sol.u, ∂sol.u
 
-    if iip
+    if isinplace(prob)
         fᵤ = similar(u)
         f(fᵤ, u, p)
     else
@@ -40,7 +35,7 @@ end
 
     A₁ = ∂ϕ₊∂u₊ * ∂ϕ₋∂u₋
     A₂ = ∂ϕ₊∂v₊ * ∂ϕ₋∂u₋ + ∂ϕ₋∂v₋
-    if iip
+    if isinplace(prob)
         # Using ForwardDiff for now. We can potentially use Enzyme.jl here
         J = ForwardDiff.jacobian((y, u) -> f(y, u, p), fᵤ, u)
         A = J' * A₁ .+ A₂
@@ -57,7 +52,7 @@ end
     end
     λ = solve(LinearProblem(A, __unfillarray(∂u)), sensealg.linsolve).u
 
-    if iip
+    if isinplace(prob)
         # Using ForwardDiff for now. We can potentially use Enzyme.jl here
         J = ForwardDiff.jacobian((y, p) -> f(y, u, p), fᵤ, p)
         ∂p = -reshape((A₁ * λ)' * J, size(p))

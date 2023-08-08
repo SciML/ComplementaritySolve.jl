@@ -13,12 +13,8 @@ include("utils.jl")
 
         prob = LinearComplementarityProblem(A, q, zeros(2))
 
-        @testset "solver: $(nameof(typeof(solver)))" for solver in [
-            BokhovenIterativeAlgorithm(),
-            RPSOR(; ω=1.0, ρ=0.1),
-            PGS(),
-            InteriorPointMethod(),
-        ]
+        @testset "solver: $(nameof(typeof(solver)))" for solver in [RPSOR(; ω=1.0, ρ=0.1),
+            BokhovenIterativeAlgorithm(), PGS(), InteriorPointMethod()]
             sol = solve(prob, solver)
 
             @test sol.u≈[4.0 / 3, 7.0 / 3] rtol=1e-3
@@ -29,14 +25,9 @@ include("utils.jl")
         @testset "Batched Version" begin
             prob = LinearComplementarityProblem(A, q, rand(rng, 2, 4))
 
-            @testset "solver: $(nameof(typeof(solver)))" for solver in [
-                BokhovenIterativeAlgorithm(),
-                RPGS(),
-                PGS(),
-                PSOR(),
-                NonlinearReformulation(:smooth, SimpleDFSane(; batched=true)),
-                InteriorPointMethod(),
-            ]
+            @testset "solver: $(nameof(typeof(solver)))" for solver in [RPGS(), PGS(),
+                PSOR(), BokhovenIterativeAlgorithm(), InteriorPointMethod(),
+                NonlinearReformulation(:smooth, SimpleDFSane(; batched=true))]
                 sol = solve(prob, solver)
 
                 @test all(z -> ≈(z, [4.0 / 3, 7.0 / 3]; rtol=1e-3), eachcol(sol.u))
@@ -87,11 +78,8 @@ include("utils.jl")
                 end
             end
 
-            __sizes_list = (((2, 2, 5), (2, 5)),
-                ((2, 2), (2, 5)),
-                ((2, 2, 1), (2, 5)),
-                ((2, 2, 5), (2, 1)),
-                ((2, 2, 5), (2, 5)))
+            __sizes_list = (((2, 2, 5), (2, 5)), ((2, 2), (2, 5)), ((2, 2, 1), (2, 5)),
+                ((2, 2, 5), (2, 1)), ((2, 2, 5), (2, 5)))
             @testset "Batched Adjoint Problem: size(M) = $(szM), size(q) = $(szq)" for (szM, szq) in __sizes_list
                 M_ = rand(rng, Float32, szM...)
                 q_ = randn(rng, Float32, szq...)
@@ -138,8 +126,9 @@ include("utils.jl")
         end
     end
 
+    # TODO: Streamline these. Too much code duplication!
+    # taken from https://github.com/siconos/siconos/tree/master/numerics/src/LCP/test/data
     @testset "Convergence Test" begin
-        #taken from https://github.com/siconos/siconos/tree/master/numerics/src/LCP/test/data
         @testset "PGS: $(file_name)" for file_name in [
             "data/lcp_CPS_1.dat",
             "data/lcp_CPS_5.dat",
@@ -157,7 +146,7 @@ include("utils.jl")
 
         @testset "NonlinearReformulation" begin
 
-            #problems that pass with direct_solvers,iterative_solvers,equation-based solvers
+            # problems that pass with direct_solvers, iterative_solvers, equation-based solvers
             @testset "Netwon-Raphson: $(file_name)" for file_name in [
                 "data/lcp_CPS_2.dat",
                 "data/lcp_CPS_3.dat",
@@ -172,8 +161,8 @@ include("utils.jl")
             end
 
             @testset "Broyden: $(file_name)" for file_name in [
-                "data/lcp_CPS_3.dat",#iterative solvers test 
-                "data/lcp_enum_fails.dat",#direct solver LCP_enum
+                "data/lcp_CPS_3.dat", # iterative solvers test 
+                "data/lcp_enum_fails.dat", # direct solver LCP_enum
             ]
                 (M, q) = parse_lcp_data(joinpath(@__DIR__, file_name))
                 prob = LCP(M, q)
@@ -185,10 +174,8 @@ include("utils.jl")
         end
 
         @testset "Positive Definite Problems" begin
-            """
-            both problems pass with direct_solvers,iterative_solvers,equation-based solvers but
-            M is positive definite so we can use our solvers that target such problems
-            """
+            # both problems pass with direct_solvers, iterative_solvers, equation-based solvers
+            # but M is positive definite so we can use our solvers that target such problems
 
             @testset "BokhovenIterative: $(file_name)" for file_name in [
                 "data/lcp_trivial.dat",
@@ -214,37 +201,33 @@ include("utils.jl")
             end
         end
 
-        @testset "Broken tests" begin
-            """the problems were supposed to work with iterative solvers, such as PGS,RPGS,PSOR. 
-            Our implementation uses the same default parameters as siconos tests.
-            """
+        # the problems were supposed to work with iterative solvers, such as PGS,RPGS,PSOR. 
+        # Our implementation uses the same default parameters as siconos tests.
+        @testset "Iterative Solvers: $(file_name)" for file_name in [
+            "data/lcp_CPS_4.dat",
+            "data/lcp_CPS_4bis.dat",
+        ]
+            (M, q) = parse_lcp_data(joinpath(@__DIR__, file_name))
+            prob = LCP(M, q)
+            sol = solve(prob, RPGS())
+            # @test all(isfinite, sol.u)
+            @test_broken all(>=(-1e-5), sol.u)
+            w = M * sol.u .+ q
+            @test_broken (w' * sol.u)≈0.0 atol=1e-6
+        end
 
-            @testset "Iterative Solvers: $(file_name)" for file_name in [
-                "data/lcp_CPS_4.dat",
-                "data/lcp_CPS_4bis.dat",
-            ]
-                (M, q) = parse_lcp_data(joinpath(@__DIR__, file_name))
-                prob = LCP(M, q)
-                sol = solve(prob, RPGS())
-                #@test all(isfinite, sol.u)
-                @test_broken all(>=(-1e-5), sol.u)
-                w = M * sol.u .+ q
-                @test_broken (w' * sol.u)≈0.0 atol=1e-6
-            end
-
-            #the problems were supposed to pass with Direct Solvers in siconos, such as Lemke
-            @testset "Direct Solvers: $(file_name)" for file_name in [
-                "data/lcp_Pang_isolated_sol.dat",
-                "data/lcp_Pang_isolated_sol_perturbed.dat",
-            ]
-                (M, q) = parse_lcp_data(joinpath(@__DIR__, file_name))
-                prob = MCP(LCP(M, q))
-                sol = solve(prob, PATHSolverAlgorithm())
-                #@test all(isfinite, sol.u)
-                @test all(>=(-1e-5), sol.u)
-                w = M * sol.u .+ q
-                @test_broken (w' * sol.u)≈0.0 atol=1e-6
-            end
+        #the problems were supposed to pass with Direct Solvers in siconos, such as Lemke
+        @testset "Direct Solvers: $(file_name)" for file_name in [
+            "data/lcp_Pang_isolated_sol.dat",
+            "data/lcp_Pang_isolated_sol_perturbed.dat",
+        ]
+            (M, q) = parse_lcp_data(joinpath(@__DIR__, file_name))
+            prob = MCP(LCP(M, q))
+            sol = solve(prob, PATHSolverAlgorithm())
+            # @test all(isfinite, sol.u)
+            @test all(>=(-1e-5), sol.u)
+            w = M * sol.u .+ q
+            @test_broken (w' * sol.u)≈0.0 atol=1e-6
         end
     end
 end

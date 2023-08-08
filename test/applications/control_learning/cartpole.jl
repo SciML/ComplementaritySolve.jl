@@ -1,15 +1,6 @@
-using Zygote,
-    LinearAlgebra,
-    SimpleNonlinearSolve,
-    OrdinaryDiffEq,
-    Optimization,
-    OptimizationOptimisers,
-    SciMLSensitivity,
-    SteadyStateDiffEq,
-    Test,
-    ComponentArrays,
+using Zygote, LinearAlgebra, SimpleNonlinearSolve, OrdinaryDiffEq, Optimization,
+    OptimizationOptimisers, SciMLSensitivity, SteadyStateDiffEq, Test, ComponentArrays,
     StableRNGs
-
 using ComplementaritySolve
 
 const g = 9.81;
@@ -21,30 +12,30 @@ const k1 = 10.0;
 const k2 = 10.0;
 
 rng = StableRNG(0)
-#steady state
+# steady state
 x_steady = [0.0, 0.0, 0.0, 0.0]
-#initial pos
+# initial pos
 r_x = rand(rng, 3) .* 2 .- 1
 x0 = [10 * r_x[1], 0.0, r_x[2], r_x[3]]
 
-#dynamics of the cartpole system
+# dynamics of the cartpole system
 
 A = [0.0 0.0 1.0 0.0
     0.0 0.0 0.0 1.0
     0.0 (g * mp)/mc 0.0 0.0
     0.0 g * (mc + mp)/(l * mc) 0.0 0.0]
-B = reshape([0.0; 0.0; 1 / mc; 1 / (l * mc)], (4, 1));
+B = reshape([0.0; 0.0; 1 / mc; 1 / (l * mc)], (4, 1))
 
 D = [zeros(Float64, 3, 2); 1/(l * mp) -1/(l * mp)]
 E = [-1.0 l 0.0 0.0; 1.0 -l 0.0 0.0]
 F = [1/k1 0.0; 0.0 1/k2]
-c = d1;
-a = 0.0;#[0.0;0.0;0.0; 0.0 ]
+c = d1
+a = 0.0
 
-#extract dimension information
-n = size(A, 2) #dimension of state space
-k = size(B, 2)#dimension of input
-m = size(D, 2) #number of contacts
+# extract dimension information
+n = size(A, 2) # dimension of state space
+k = size(B, 2) # dimension of input
+m = size(D, 2) # number of contacts
 
 tspan = (0.0, 1.0)
 
@@ -57,9 +48,6 @@ stable_L = Float64[-13.98 13.98]
 stable_θ = ComponentArray(; K=stable_K, L=stable_L)
 
 rng = StableRNG(0)
-#prob = LCS(x0, controller, tspan, stable_θ, A, B, D, a, E, F, c)
-#solver = NaiveLCSAlgorithm(Tsit5(), NonlinearReformulation())
-#sol = solve(prob, solver)
 
 @testset "Stable Controller" begin
     @testset "Finite Horizon ODE" begin
@@ -74,8 +62,7 @@ rng = StableRNG(0)
         @test begin
             ∂stable_θ_ode = only(Zygote.gradient(stable_θ) do θ
                 prob = LCS(x0, controller, tspan, θ, A, B, D, a, E, F, c)
-                sol = solve(prob,
-                    solver;
+                sol = solve(prob, solver;
                     ode_kwargs=(; sensealg=BacksolveAdjoint(; autojacvec=ZygoteVJP())),
                     lcp_kwargs=(; sensealg=LinearComplementarityAdjoint()))
                 return sum(abs2, last(sol.u))
@@ -89,9 +76,7 @@ rng = StableRNG(0)
         prob = LCS(x0, controller, (first(tspan), Inf64), stable_θ, A, B, D, a, E, F, c)
         solver = NaiveLCSAlgorithm(DynamicSS(Tsit5();
                 termination_condition=NLSolveTerminationCondition(NLSolveTerminationMode.AbsNorm;
-                    abstol=1e-2,
-                    reltol=1e-2)),
-            NonlinearReformulation())
+                    abstol=1e-2, reltol=1e-2)), NonlinearReformulation())
         sol = solve(prob, solver; abstol=1e-3, reltol=1e-3)
 
         @test sol isa SciMLBase.NonlinearSolution
@@ -101,8 +86,7 @@ rng = StableRNG(0)
         @test begin
             ∂stable_θ_ode = only(Zygote.gradient(stable_θ) do θ
                 prob = LCS(x0, controller, (first(tspan), Inf64), θ, A, B, D, a, E, F, c)
-                sol = solve(prob,
-                    solver;
+                sol = solve(prob, solver;
                     ode_kwargs=(; sensealg=SteadyStateAdjoint(; autojacvec=ZygoteVJP())),
                     lcp_kwargs=(; sensealg=LinearComplementarityAdjoint()))
                 return sum(abs2, last(sol.u))
@@ -114,8 +98,7 @@ rng = StableRNG(0)
 end
 
 @testset "Learn a stabilizing controller" begin
-    θ_init = ComponentArray(;
-        K=10 * (rand(rng, Float64, (k, n)) .- 0.5),
+    θ_init = ComponentArray(; K=10 * (rand(rng, Float64, (k, n)) .- 0.5),
         L=10 * (rand(rng, Float64, (k, m)) .- 0.5))
     solver = NaiveLCSAlgorithm(Tsit5(), NonlinearReformulation())
 
@@ -141,24 +124,15 @@ end
 
     optprob = Optimization.OptimizationProblem(optf, θ_init)
 
-    result_neurallcs = Optimization.solve(optprob,
-        ADAM(0.1);
-        callback=callback,
-        maxiters=10000)
+    result_neurallcs = Optimization.solve(optprob, Adam(0.1); callback, maxiters=10000)
 
     optprob2 = Optimization.OptimizationProblem(optf, result_neurallcs.u)
 
-    result_neurallcs2 = Optimization.solve(optprob2,
-        ADAM(0.003);
-        callback=callback,
-        maxiters=30000)
+    result_neurallcs2 = Optimization.solve(optprob2, Adam(0.003); callback, maxiters=30000)
 
     optprob3 = Optimization.OptimizationProblem(optf, result_neurallcs2.u)
 
-    result_neurallcs3 = Optimization.solve(optprob3,
-        ADAM(0.0003);
-        callback=callback,
-        maxiters=25000)
+    result_neurallcs3 = Optimization.solve(optprob3, Adam(0.0003); callback, maxiters=25000)
 
     θ_estimated = result_neurallcs3.u
 

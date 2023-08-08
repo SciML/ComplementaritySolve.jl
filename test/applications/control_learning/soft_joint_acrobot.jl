@@ -1,6 +1,6 @@
-using ChainRulesCore, ComplementaritySolve, ComponentArrays, DiffEqBase, ForwardDiff
-using LinearAlgebra, Optimization, OptimizationOptimisers, OrdinaryDiffEq, SciMLSensitivity
-using SimpleNonlinearSolve, SparseArrays, StableRNGs, Statistics, SteadyStateDiffEq, Test
+using ChainRulesCore, ComplementaritySolve, ComponentArrays, DiffEqBase, ForwardDiff,
+    LinearAlgebra, Optimization, OptimizationOptimisers, OrdinaryDiffEq, SciMLSensitivity,
+    SimpleNonlinearSolve, SparseArrays, StableRNGs, Statistics, SteadyStateDiffEq, Test
 using Zygote
 
 const m₁ = 0.5f0
@@ -35,8 +35,7 @@ const c = d
 
 rng = StableRNG(0)
 
-x0 = vcat(randn(rng, Float32, 2) .* 0.005f0,
-    randn(rng, Float32, 1) * 0.02f0,
+x0 = vcat(randn(rng, Float32, 2) .* 0.005f0, randn(rng, Float32, 1) * 0.02f0,
     randn(rng, Float32, 1) * 0.01f0)
 tspan = (0.0f0, 1.0f0)
 
@@ -59,8 +58,7 @@ function finite_horizon_ode_test(θ)
 
     ∂θ = only(Zygote.gradient(θ) do θ
         prob = LCS(x0, controller, tspan, θ, A, B, D, a, E, F, c)
-        sol = solve(prob,
-            solver;
+        sol = solve(prob, solver;
             ode_kwargs=(; sensealg=BacksolveAdjoint(; autojacvec=ZygoteVJP())),
             lcp_kwargs=(; sensealg=LinearComplementarityAdjoint()))
         return sum(abs2, last(sol.u))
@@ -81,9 +79,7 @@ function steady_state_test(θ)
     prob = LCS(x0, controller, (first(tspan), Inf32), θ, A, B, D, a, E, F, c)
     solver = NaiveLCSAlgorithm(DynamicSS(Tsit5();
             termination_condition=NLSolveTerminationCondition(NLSolveTerminationMode.AbsNorm;
-                abstol=1.0f-2,
-                reltol=1.0f-2)),
-        NonlinearReformulation())
+                abstol=1.0f-2, reltol=1.0f-2)), NonlinearReformulation())
     sol = solve(prob, solver; abstol=1.0f-6, reltol=1.0f-6)
 
     @test sol isa SciMLBase.NonlinearSolution
@@ -92,8 +88,7 @@ function steady_state_test(θ)
 
     ∂θ = only(Zygote.gradient(θ) do θ
         prob = LCS(x0, controller, (first(tspan), Inf32), θ, A, B, D, a, E, F, c)
-        sol = solve(prob,
-            solver;
+        sol = solve(prob, solver;
             ode_kwargs=(; sensealg=SteadyStateAdjoint(; autojacvec=ZygoteVJP())),
             lcp_kwargs=(; sensealg=LinearComplementarityAdjoint()))
         return sum(abs2, last(sol.u))
@@ -133,17 +128,13 @@ end
         ts = sol.t[idxs]
 
         # Initialize the controller
-        θ_init = ComponentArray(;
-            K=randn(rng, Float32, 1, 4),
+        θ_init = ComponentArray(; K=randn(rng, Float32, 1, 4),
             L=randn(rng, Float32, 1, 2)) .* 0.0001f0
         solver = NaiveLCSAlgorithm(Tsit5(), NonlinearReformulation())
 
         function loss_function(θ)
             prob = LCS(x0, controller, tspan, θ, A, B, D, a, E, F, c)
-            lcs_sol = solve(prob,
-                solver;
-                abstol=1.0f-3,
-                reltol=1.0f-3,
+            lcs_sol = solve(prob, solver; abstol=1.0f-3, reltol=1.0f-3,
                 ode_kwargs=(; saveat=ts))
             return mean(abs2, reduce(hcat, lcs_sol.u) .- target_us)
         end
@@ -166,16 +157,12 @@ end
         optf = Optimization.OptimizationFunction((x, p) -> loss_function(x), adtype)
         optprob = Optimization.OptimizationProblem(optf, θ_init)
 
-        optsol = Optimization.solve(optprob,
-            Adam(0.05);
-            callback=callback_parameter_estim,
+        optsol = Optimization.solve(optprob, Adam(0.05); callback=callback_parameter_estim,
             maxiters=1000)
 
         optprob = Optimization.OptimizationProblem(optf, optsol.u)
 
-        optsol = Optimization.solve(optprob,
-            Adam(0.001);
-            callback=callback_parameter_estim,
+        optsol = Optimization.solve(optprob, Adam(0.001); callback=callback_parameter_estim,
             maxiters=1000)
 
         θ_estimated = optsol.u
