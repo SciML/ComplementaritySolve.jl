@@ -1,9 +1,5 @@
 @views function __solve(prob::LinearComplementarityProblem{iip, true},
-    solver::AbstractComplementarityAlgorithm,
-    u0,
-    M,
-    q;
-    verbose::Bool=true,
+    solver::AbstractComplementarityAlgorithm, u0, M, q; verbose::Bool=true,
     kwargs...) where {iip}
     if verbose
         @warn "Solver: $(nameof(typeof(solver))) doesn't support batched problems. Falling \
@@ -21,12 +17,8 @@
     return_codes[1] = sol_first.retcode
 
     Threads.@threads :static for i in 1:size(u0, 2)
-        sol = __solve(ℒ𝒞𝒫,
-            solver,
-            u0[:, mod1(i, size(u0, 2))],
-            M[:, :, mod1(i, size(M, 3))],
-            q[:, mod1(i, size(q, 2))];
-            kwargs...)
+        sol = __solve(ℒ𝒞𝒫, solver, u0[:, mod1(i, size(u0, 2))],
+            M[:, :, mod1(i, size(M, 3))], q[:, mod1(i, size(q, 2))]; kwargs...)
         us[:, i] .= sol.u
         residual !== nothing && (residual[:, i] .= sol.residual)
         return_codes[i] = sol.retcode

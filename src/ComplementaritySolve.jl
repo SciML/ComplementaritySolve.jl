@@ -39,8 +39,7 @@ import LinearSolve: DefaultLinearSolver, DefaultAlgorithmChoice
 
 #### To be Upstreamed
 function LinearSolve.defaultalg(A::SciMLBase.AbstractSciMLOperator,
-    b::GPUArraysCore.AbstractGPUArray,
-    assump::LinearSolve.OperatorAssumptions)
+    b::GPUArraysCore.AbstractGPUArray, assump::LinearSolve.OperatorAssumptions)
     alg_choice = if has_ldiv!(A)
         DefaultAlgorithmChoice.DirectLdiv!
     elseif !assump.issq
@@ -51,7 +50,7 @@ function LinearSolve.defaultalg(A::SciMLBase.AbstractSciMLOperator,
             DefaultAlgorithmChoice.KrylovJL_LSMR
         end
     else
-        return DefaultAlgorithmChoice.KrylovJL_GMRES
+        DefaultAlgorithmChoice.KrylovJL_GMRES
     end
     return DefaultLinearSolver(alg_choice)
 end
