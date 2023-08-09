@@ -12,7 +12,7 @@ using LinearAlgebra, Markdown, SparseArrays
 ## SciML Dependencies
 using LinearSolve, SciMLOperators, SimpleNonlinearSolve, NonlinearSolve
 ## AD Packages (for sensitivities & PATHSolver; move to extensions)
-using ForwardDiff, Zygote
+using ForwardDiff, Zygote,FiniteDiff,Symbolics,SparseDiffTools
 ## External Solvers (for PATHSolver; move to extensions)
 using PATHSolver
 ## Fast Batching Support
