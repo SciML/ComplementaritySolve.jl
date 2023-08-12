@@ -6,28 +6,43 @@ with ChainRules.
 ## Installation
 
 ```julia
-] add git@github.com:avik-pal/ComplementaritySolve.jl.git
+import Pkg
+Pkg.add("https://github.com:avik-pal/ComplementaritySolve.jl.git")
 ```
-
-Add a specific version of `SimpleNonlinearSolve.jl` with
-`] add https://github.com/avik-pal/SimpleNonlinearSolve.jl#ap/batch_revamp`
 
 ## Implemented Problems & Algorithms
 
-### Complementarity Problems
+### LCP Solvers
 
-* Linear Complementarity Problems (LCP)
-  * Nonlinear Reformulation
-  * RPSOR
-    * PSOR
-    * PGS
-    * RPGS
-  * Bokhoven Iterative Method (PSD `M` / monotone LCP)
-* Mixed Linear Complementarity Problems (MLCP)
-* Nonlinear Complementarity Problems (NCP)
-* Mixed Complementarity Problems (MCP)
-  * Nonlinear Reformulation
-  * PATH Solver (via [PATHSolver.jl](https://github.com/chkwon/PATHSolver.jl))
+| Solver                     |  Native Batching   |        CPU         |      CUDA[^1]      | Details         |
+| -------------------------- | :----------------: | :----------------: | :----------------: | --------------- |
+| NonlinearReformulation     | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |                 |
+| RPGS                       |        :x:         | :heavy_check_mark: |        :x:         |                 |
+| PGS                        |        :x:         | :heavy_check_mark: |        :x:         |                 |
+| PSOR                       |        :x:         | :heavy_check_mark: |        :x:         |                 |
+| BokhovenIterativeAlgorithm | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | Assumes PSD `M` |
+| InteriorPointMethod        | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: | Assumes PSD `M` |
+
+Solvers that don't natively support batching, use threads to solve multiple problems in parallel.
+
+### MCP Solvers
+
+| Solver                 |        CPU         |      CUDA[^1]      | Details                                                                                                                                                                                           |
+| ---------------------- | :----------------: | :----------------: | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| NonlinearReformulation | :heavy_check_mark: | :heavy_check_mark: |                                                                                                                                                                                                   |
+| PATHSolver             | :heavy_check_mark: |        :x:         | <ul> <li> Provides an uniform API to access [path.c](https://pages.cs.wisc.edu/~ferris/path.html) </li> <li> Only `Float64` is supported, all inputs will be cast to `Float64`. </li> </ul> |
+
+All `LCP`s, `MLCP`s, and `NCP`s can be converted to `MCP`s, and these solvers can be used directly.
+
+### Adjoint Methods
+
+| Method                       | Problem Type |  Native Batching   |        CPU         |      CUDA[^1]      | Details |
+| ---------------------------- | ------------ | :----------------: | :----------------: | :----------------: | ------- |
+| LinearComplementarityAdjoint | LCP          | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |         |
+| MixedComplementarityAdjoint  | MCP          |                    | :heavy_check_mark: | :heavy_check_mark: |         |
+
+[^1]: Solvers internally using `NonlinearSolve.jl` need to use a CUDA compatible solver
+(like `SimpleNewtonRaphson(; batched=true)`).
 
 ## Usage
 

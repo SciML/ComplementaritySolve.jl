@@ -20,10 +20,19 @@ end
     @testif TESTING_GROUP "Core" begin
         @testif BACKEND_GROUP "CPU" begin
             @safetestset "Linear Complementarity Problems" begin
-                include("core/lcp.jl")
+                include("core/cpu/lcp.jl")
             end
             @safetestset "Mixed Complementarity Problems" begin
-                include("core/mcp.jl")
+                include("core/cpu/mcp.jl")
+            end
+        end
+
+        @testif BACKEND_GROUP "CUDA" begin
+            @safetestset "Linear Complementarity Problems" begin
+                include("core/cuda/lcp.jl")
+            end
+            @safetestset "Mixed Complementarity Problems" begin
+                include("core/cuda/mcp.jl")
             end
         end
     end
@@ -32,13 +41,13 @@ end
         @testif BACKEND_GROUP "CPU" begin
             @testset "Differentiable Controller Learning" begin
                 @safetestset "Acrobot with Soft Joint Limits" begin
-                    include("applications/control_learning/soft_joint_acrobot.jl")
+                    include("applications/cpu/control_learning/soft_joint_acrobot.jl")
                 end
                 @safetestset "Cart Pole with Soft Walls" begin
-                    include("applications/control_learning/cartpole.jl")
+                    include("applications/cpu/control_learning/cartpole.jl")
                 end
                 @safetestset "Partial State Feedback" begin
-                    include("applications/control_learning/partial_state_feedback.jl")
+                    include("applications/cpu/control_learning/partial_state_feedback.jl")
                 end
             end
         end
@@ -47,7 +56,7 @@ end
     @testif TESTING_GROUP "QA" begin
         @testif BACKEND_GROUP "CPU" begin
             @safetestset "Aqua Quality Assurance" begin
-                include("core/aqua.jl")
+                include("aqua.jl")
             end
         end
     end

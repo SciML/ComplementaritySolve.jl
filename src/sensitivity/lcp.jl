@@ -15,7 +15,12 @@ function __∇lcp(u::AV, ∂u, ∂ϕ₋∂u₋, M, ∂ϕ₋∂v₋, L, Lₘ, lin
     # -∂ϕ₋∂u₋ * reduce(hcat, Zygote.jacobian((A, q) -> A * u .+ q, A, q))
     B = -hcat(reshape(reshape(u, 1, 1, L) .* reshape(∂ϕ₋∂u₋, L, L, 1), L, Lₘ),
         ∂ϕ₋∂u₋ * __diagonal(one.(u)))
-    λ = solve(LinearProblem(A, __unfillarray(∂u)), linsolve).u
+    if linsolve === nothing
+        # FIXME: Default linsolve selection in LinearSolve.jl fails on GPU
+        λ = A \ __unfillarray(∂u)
+    else
+        λ = solve(LinearProblem(A, __unfillarray(∂u)), linsolve).u
+    end
     return vec(λ' * B)
 end
 
@@ -23,7 +28,7 @@ function __∇lcp(u::AM, ∂u, ∂ϕ₋∂u₋, M, ∂ϕ₋∂v₋, L, Lₘ, lin
     A = __make_block_diagonal_operator(batched_transpose(M) ⊠ ∂ϕ₋∂u₋ .+ ∂ϕ₋∂v₋)
     B = -hcat(reshape(reshape(u, 1, 1, L, :) .* reshape(∂ϕ₋∂u₋, L, L, 1, :), L, Lₘ, :),
         ∂ϕ₋∂u₋ ⊠ __diagonal(one.(u)))
-    λ = reshape(solve(LinearProblem(A, __unfillarray(vec(∂u))), linsolve).u, L, :)
+    λ = solve(LinearProblem(A, __unfillarray(vec(∂u))), linsolve).u
     return dropdims(reshape(λ, 1, L, :) ⊠ B; dims=1)
 end
 

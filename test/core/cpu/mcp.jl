@@ -30,8 +30,7 @@ rng = StableRNG(0)
                 prob = MCP(func, u0, lower_bound, upper_bound, θ)
 
                 @testset "Solver: $(typeof(solver))" for solver in (PATHSolverAlgorithm(),
-                    NonlinearReformulation(:smooth, NewtonRaphson()),
-                    NonlinearReformulation(:minmax, NewtonRaphson()))
+                    NonlinearReformulation(:smooth), NonlinearReformulation(:minmax))
                     sol = solve(prob, solver; verbose=false)
 
                     @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
@@ -48,8 +47,7 @@ rng = StableRNG(0)
             end
 
             loss_function_path = Base.Fix2(loss_function, PATHSolverAlgorithm())
-            loss_function_nr = Base.Fix2(loss_function,
-                NonlinearReformulation(:smooth, NewtonRaphson()))
+            loss_function_nr = Base.Fix2(loss_function, NonlinearReformulation(:smooth))
 
             θ = [2.0, -3.0]
             ∂θ_zygote = only(Zygote.gradient(loss_function_path, θ))
@@ -94,10 +92,10 @@ rng = StableRNG(0)
 
             loss_function_path_oop = Base.Fix2(loss_function_oop, PATHSolverAlgorithm())
             loss_function_nr_oop = Base.Fix2(loss_function_oop,
-                NonlinearReformulation(:smooth, NewtonRaphson()))
+                NonlinearReformulation(:smooth))
             loss_function_path_iip = Base.Fix2(loss_function_iip, PATHSolverAlgorithm())
             loss_function_nr_iip = Base.Fix2(loss_function_iip,
-                NonlinearReformulation(:smooth, NewtonRaphson()))
+                NonlinearReformulation(:smooth))
 
             for loss_function in (loss_function_path_oop,
                 loss_function_nr_oop,

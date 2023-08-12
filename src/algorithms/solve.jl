@@ -26,22 +26,15 @@ function __default_sensealg(::T) where {T <: AbstractComplementarityProblem}
            adjoints." maxlog=1
     return nothing
 end
-__default_sensealg(::LinearComplementarityProblem) = LinearComplementarityAdjoint()
-__default_sensealg(::MixedComplementarityProblem) = MixedComplementarityAdjoint()
+__default_sensealg(::LCP) = LinearComplementarityAdjoint()
+__default_sensealg(::MCP) = MixedComplementarityAdjoint()
 
 function __default_solver(::T) where {T <: AbstractComplementarityProblem}
     return error("No default solver for type $(T). Please specify a solver.")
 end
-function __default_solver(prob::LCP)
-    if isbatched(prob)
-        nlsolver = (SciMLBase.isinplace(prob) ? SimpleDFSane : SimpleNewtonRaphson)(;
-            batched=true)
-        return NonlinearReformulation(:smooth, nlsolver)
-    else
-        return NonlinearReformulation()
-    end
-end
-__default_solver(::MixedComplementarityProblem) = NonlinearReformulation()
+## Defaulting to SimpleNewtonRaphson(; batched=true) since it is the most robust
+## and works well with inplace/out of place and also works OOTB with GPUs
+__default_solver(::Union{LCP, MCP}) = NonlinearReformulation(:smooth, DEFAULT_NLSOLVER)
 
 # Algorithms should dispatch on __solve
 function __solve end
