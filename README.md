@@ -27,17 +27,17 @@ Solvers that don't natively support batching, use threads to solve multiple prob
 
 ### MCP Solvers
 
-| Solver                 |        CPU         |    CUDA[^1]    | Details                                                                                                                                                              |
-| ---------------------- | :----------------: | :------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Solver                 |        CPU         |      CUDA[^1]      | Details                                                                                                                                                              |
+| ---------------------- | :----------------: | :----------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | NonlinearReformulation | :heavy_check_mark: | :heavy_check_mark: |                                                                                                                                                                      |
-| PATHSolver             | :heavy_check_mark: |      :x:       | * Provides an uniform API to access [path.c](https://pages.cs.wisc.edu/~ferris/path.html) <br/> * Only `Float64` is supported, all inputs will be cast to `Float64`. |
+| PATHSolver             | :heavy_check_mark: |        :x:         | * Provides an uniform API to access [path.c](https://pages.cs.wisc.edu/~ferris/path.html) <br/> * Only `Float64` is supported, all inputs will be cast to `Float64`. |
 
 All `LCP`s, `MLCP`s, and `NCP`s can be converted to `MCP`s, and these solvers can be used directly.
 
 ### Adjoint Methods
 
-| Method                       | Problem Type |  Native Batching   |        CPU         |    CUDA[^1]    | Details |
-| ---------------------------- | ------------ | :----------------: | :----------------: | :------------: | ------- |
+| Method                       | Problem Type |  Native Batching   |        CPU         |      CUDA[^1]      | Details |
+| ---------------------------- | ------------ | :----------------: | :----------------: | :----------------: | ------- |
 | LinearComplementarityAdjoint | LCP          | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |         |
 | MixedComplementarityAdjoint  | MCP          |                    | :heavy_check_mark: | :heavy_check_mark: |         |
 
