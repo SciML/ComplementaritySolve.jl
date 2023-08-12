@@ -5,12 +5,7 @@ abstract type AbstractNonlinearComplementarityProblem{iip} <:
               AbstractComplementarityProblem{iip} end
 
 SciMLBase.isinplace(::AbstractComplementarityProblem{iip}) where {iip} = iip
-function isbatched(::AbstractLinearComplementarityProblem{
-    iip,
-    batched,
-}) where {iip, batched}
-    return batched
-end
+isbatched(::AbstractLinearComplementarityProblem{I, B}) where {I, B} = B
 
 @concrete struct LinearComplementarityProblem{iip, batched} <:
                  AbstractLinearComplementarityProblem{iip, batched}
@@ -50,10 +45,7 @@ end
 LinearComplementarityProblem(args...) = LinearComplementarityProblem{true}(args...)
 
 for iip in (true, false)
-    @eval function CRC.rrule(::Type{LinearComplementarityProblem{$iip}},
-        M,
-        q,
-        args...;
+    @eval function CRC.rrule(::Type{LinearComplementarityProblem{$iip}}, M, q, args...;
         kwargs...)
         prob = LinearComplementarityProblem{$iip}(M, q, args...; kwargs...)
         function ∇LinearComplementarityProblem(Δ)

@@ -2,11 +2,8 @@ struct PATHSolverAlgorithm <: AbstractComplementarityAlgorithm end
 
 # TODO: We might want to exploit sparsity using Symbolics.jl. Else PATH Solver won't be
 #       competitive with other solvers. See ParametricMCPs.jl for an example.
-function __solve(prob::MCP{iip},
-    alg::PATHSolverAlgorithm,
-    u0,
-    p;
-    verbose::Bool=false,
+
+function __solve(prob::MCP{iip}, alg::PATHSolverAlgorithm, u0, p; verbose::Bool=false,
     kwargs...) where {iip}
     (; f, lb, ub) = prob
 
@@ -48,10 +45,7 @@ function __solve(prob::MCP{iip},
     end
 
     status, z, info = PATHSolver.solve_mcp(F!, J!, lb, ub, u0; silent=!verbose, kwargs...)
-    return MixedComplementaritySolution(z,
-        info.residual,
-        prob,
-        alg,
+    return MixedComplementaritySolution(z, info.residual, prob, alg,
         __pathsolver_status_to_return_code(status))
 end
 

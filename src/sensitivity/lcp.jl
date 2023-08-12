@@ -27,14 +27,8 @@ function __∇lcp(u::AM, ∂u, ∂ϕ₋∂u₋, M, ∂ϕ₋∂v₋, L, Lₘ, lin
     return dropdims(reshape(λ, 1, L, :) ⊠ B; dims=1)
 end
 
-@views function __solve_adjoint(prob::LinearComplementarityProblem{iip, batched},
-    sensealg::LinearComplementarityAdjoint,
-    sol,
-    ∂sol,
-    u0,
-    M,
-    q;
-    kwargs...) where {iip, batched}
+@views function __solve_adjoint(prob::LinearComplementarityProblem,
+    sensealg::LinearComplementarityAdjoint, sol, ∂sol, u0, M, q; kwargs...)
     (__notangent(∂sol) || __notangent(∂sol.u)) && return (∂∅, ∂∅)
 
     u, ∂u = sol.u, ∂sol.u
@@ -52,7 +46,7 @@ end
     ∂M_ = selectdim(∂Mq, 1, 1:Lₘ)
     ∂q_ = selectdim(∂Mq, 1, (Lₘ + 1):size(∂Mq, 1))
 
-    if batched
+    if isbatched(prob)
         size(∂M_, 2) != size(M, 3) && (∂M_ = sum(∂M_; dims=2))
         size(∂q_, 2) != size(q, 2) && (∂q_ = sum(∂q_; dims=2))
     end

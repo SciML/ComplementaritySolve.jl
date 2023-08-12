@@ -35,13 +35,7 @@ end
 ## For details see https://sites.math.washington.edu/~burke/crs/408f/notes/lcp/lcp.pdf
 for batched in (true, false)
     @eval @views function __solve(prob::LinearComplementarityProblem{iip, $batched},
-        alg::InteriorPointMethod,
-        u0,
-        M,
-        q;
-        maxiters=1000,
-        abstol=nothing,
-        reltol=nothing,
+        alg::InteriorPointMethod, u0, M, q; maxiters=1000, abstol=nothing, reltol=nothing,
         kwargs...) where {iip}
         @assert abstol === nothing&&reltol === nothing "Use the tolerance keyword argument \
                                                         while Solver construction instead"
@@ -95,8 +89,7 @@ for batched in (true, false)
             matmul!(w_cache, M, z, true, true)
             ρ = norm(w_cache, Inf)
 
-            σ = ifelse(τ ≤ η && ρ > η,
-                T(1),
+            σ = ifelse(τ ≤ η && ρ > η, T(1),
                 min(T(0.5), (1 - η₁)^2, (1 - η₂)^2, abs(ρ - τ) / (ρ + 10 * τ)))
 
             iter += 1
