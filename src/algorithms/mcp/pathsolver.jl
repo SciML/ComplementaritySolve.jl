@@ -6,7 +6,7 @@ function __solve(prob::MCP{iip},
     alg::PATHSolverAlgorithm,
     u0,
     p;
-    verbose::Bool=true,
+    verbose::Bool=false,
     kwargs...) where {iip}
     (; f, lb, ub) = prob
 
