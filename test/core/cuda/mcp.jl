@@ -53,8 +53,6 @@ rng = StableRNG(0)
                 return sum(sol.u)
             end
 
-            loss_function = Base.Fix2(loss_function)
-
             θ = [2.0, -3.0] |> cu
             ∂θ_zygote = only(Zygote.gradient(loss_function, θ))
             ∂θ_forwarddiff = ForwardDiff.gradient(loss_function_cpu, Array(θ))
