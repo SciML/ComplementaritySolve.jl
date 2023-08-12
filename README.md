@@ -29,7 +29,7 @@ Solvers that don't natively support batching, use threads to solve multiple prob
 
 | Solver                 |        CPU         |    CUDA[^1]    | Details                                                                                                                                                              |
 | ---------------------- | :----------------: | :------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| NonlinearReformulation | :heavy_check_mark: | :question:[^2] |                                                                                                                                                                      |
+| NonlinearReformulation | :heavy_check_mark: | :heavy_check_mark: |                                                                                                                                                                      |
 | PATHSolver             | :heavy_check_mark: |      :x:       | * Provides an uniform API to access [path.c](https://pages.cs.wisc.edu/~ferris/path.html) <br/> * Only `Float64` is supported, all inputs will be cast to `Float64`. |
 
 All `LCP`s, `MLCP`s, and `NCP`s can be converted to `MCP`s, and these solvers can be used directly.
@@ -39,11 +39,10 @@ All `LCP`s, `MLCP`s, and `NCP`s can be converted to `MCP`s, and these solvers ca
 | Method                       | Problem Type |  Native Batching   |        CPU         |    CUDA[^1]    | Details |
 | ---------------------------- | ------------ | :----------------: | :----------------: | :------------: | ------- |
 | LinearComplementarityAdjoint | LCP          | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |         |
-| MixedComplementarityAdjoint  | MCP          |                    | :heavy_check_mark: | :question:[^2] |         |
+| MixedComplementarityAdjoint  | MCP          |                    | :heavy_check_mark: | :heavy_check_mark: |         |
 
 [^1]: Solvers internally using `NonlinearSolve.jl` need to use a CUDA compatible solver
 (like `SimpleNewtonRaphson(; batched=true)`).
-[^2]: Untested.
 
 ## Usage
 

@@ -50,7 +50,13 @@ end
             A = __fixed_vecjac_operator(f, u, p, A₁, A₂)
         end
     end
-    λ = solve(LinearProblem(A, __unfillarray(∂u)), sensealg.linsolve).u
+
+    if sensealg.linsolve === nothing
+        # FIXME: Default linsolve selection in LinearSolve.jl fails on GPU
+        λ = A \ __unfillarray(∂u)
+    else
+        λ = solve(LinearProblem(A, __unfillarray(∂u)), sensealg.linsolve).u
+    end
 
     if isinplace(prob)
         # Using ForwardDiff for now. We can potentially use Enzyme.jl here
