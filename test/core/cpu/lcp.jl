@@ -3,7 +3,7 @@ using SimpleNonlinearSolve, StableRNGs, Test, Zygote
 
 rng = StableRNG(0)
 
-include("utils.jl")
+include("../../test_utils.jl")
 
 @testset "LCPs" begin
     @testset "Basic LCPs" begin
@@ -136,7 +136,7 @@ include("utils.jl")
             "data/lcp_exp_murty2.dat",
             "data/lcp_deudeu.dat",
         ]
-            (M, q) = parse_lcp_data(joinpath(@__DIR__, file_name))
+            (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
             prob = LCP(M, q)
             sol = solve(prob, PGS())
             @test all(≥(-1e-5), sol.u)
@@ -152,7 +152,7 @@ include("utils.jl")
                 "data/lcp_CPS_3.dat",
                 "data/lcp_ortiz.dat",
             ]
-                (M, q) = parse_lcp_data(joinpath(@__DIR__, file_name))
+                (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
                 prob = LCP(M, q)
                 sol = solve(prob, NonlinearReformulation())
                 @test all(>=(-1e-5), sol.u)
@@ -164,7 +164,7 @@ include("utils.jl")
                 "data/lcp_CPS_3.dat", # iterative solvers test 
                 "data/lcp_enum_fails.dat", # direct solver LCP_enum
             ]
-                (M, q) = parse_lcp_data(joinpath(@__DIR__, file_name))
+                (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
                 prob = LCP(M, q)
                 sol = solve(prob, NonlinearReformulation(:smooth, Broyden(; batched=true)))
                 @test all(>=(-1e-5), sol.u)
@@ -181,7 +181,7 @@ include("utils.jl")
                 "data/lcp_trivial.dat",
                 "data/lcp_mmc.dat",
             ]
-                (M, q) = parse_lcp_data(joinpath(@__DIR__, file_name))
+                (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
                 prob = LCP(M, q)
                 sol = solve(prob, BokhovenIterativeAlgorithm())
 
@@ -191,7 +191,7 @@ include("utils.jl")
             end
 
             @testset "IPM: $(file_name)" for file_name in ["data/lcp_trivial.dat"]
-                (M, q) = parse_lcp_data(joinpath(@__DIR__, file_name))
+                (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
                 prob = LCP(M, q)
                 sol = solve(prob, InteriorPointMethod())
 
@@ -207,10 +207,9 @@ include("utils.jl")
             "data/lcp_CPS_4.dat",
             "data/lcp_CPS_4bis.dat",
         ]
-            (M, q) = parse_lcp_data(joinpath(@__DIR__, file_name))
+            (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
             prob = LCP(M, q)
             sol = solve(prob, RPGS())
-            # @test all(isfinite, sol.u)
             @test_broken all(>=(-1e-5), sol.u)
             w = M * sol.u .+ q
             @test_broken (w' * sol.u)≈0.0 atol=1e-6
@@ -221,10 +220,9 @@ include("utils.jl")
             "data/lcp_Pang_isolated_sol.dat",
             "data/lcp_Pang_isolated_sol_perturbed.dat",
         ]
-            (M, q) = parse_lcp_data(joinpath(@__DIR__, file_name))
+            (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
             prob = MCP(LCP(M, q))
             sol = solve(prob, PATHSolverAlgorithm())
-            # @test all(isfinite, sol.u)
             @test all(>=(-1e-5), sol.u)
             w = M * sol.u .+ q
             @test_broken (w' * sol.u)≈0.0 atol=1e-6

@@ -3,7 +3,7 @@
     nlsolver
 end
 
-BokhovenIterativeAlgorithm() = BokhovenIterativeAlgorithm(NewtonRaphson())
+BokhovenIterativeAlgorithm() = BokhovenIterativeAlgorithm(DEFAULT_NLSOLVER)
 
 @truncate_stacktrace BokhovenIterativeAlgorithm
 

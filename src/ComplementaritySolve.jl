@@ -31,6 +31,8 @@ const AV = AbstractVector
 const AM = AbstractMatrix
 const AA3 = AbstractArray{T, 3} where {T}
 
+const DEFAULT_NLSOLVER = SimpleNewtonRaphson(; batched=true)
+
 ### ----- Type Piracy Starts ----- ###
 ArrayInterfaceCore.can_setindex(::Type{<:AbstractFill}) = false
 ArrayInterfaceCore.can_setindex(::Zygote.OneElement) = false
@@ -81,10 +83,8 @@ include("solutions.jl")
 include("sensitivity/lcp.jl")
 include("sensitivity/mcp.jl")
 
-export LinearComplementarityProblem,
-    MixedLinearComplementarityProblem,
-    NonlinearComplementarityProblem,
-    MixedComplementarityProblem
+export LinearComplementarityProblem, MixedLinearComplementarityProblem,
+    NonlinearComplementarityProblem, MixedComplementarityProblem
 export LinearComplementaritySystem
 export LCP, MLCP, NCP, MCP, LCS  # Short aliases
 export BokhovenIterativeAlgorithm,

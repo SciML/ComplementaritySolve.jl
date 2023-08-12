@@ -12,13 +12,14 @@ end
 function __feasible_steplength(x, Δx, cache; dims=:)
     T = eltype(x)
     cache .= x ./ (Δx .+ eps(T))
-    η = minimum(zᵢ -> ifelse(zᵢ ≥ 0, T(Inf), -zᵢ), cache; dims)
+    T_max = typemax(T)
+    η = minimum(zᵢ -> ifelse(zᵢ ≥ 0, T_max, -zᵢ), cache; dims, init=T_max)
     return min(T(0.999) * η, T(1))
 end
 
 function __make_ipm_linsolve_operator(M, zₖ, wₖ, Δzw, ::Val{batched}) where {batched}
     L = size(zₖ, 1)
-    @views function matvec(v, u, p, t)
+    function matvec(v, u, p, t)
         if batched
             v = reshape(v, 2L, :)
             u = reshape(u, 2L, :)
@@ -26,6 +27,24 @@ function __make_ipm_linsolve_operator(M, zₖ, wₖ, Δzw, ::Val{batched}) where
         Δz, Δw = selectdim(u, 1, 1:L), selectdim(u, 1, (L + 1):(2L))
         selectdim(v, 1, 1:L) .= Δw
         matmul!(selectdim(v, 1, 1:L), M, Δz, true, -1)
+        selectdim(v, 1, (L + 1):(2L)) .= zₖ .* Δw .+ wₖ .* Δz
+        return vec(v)
+    end
+    return FunctionOperator(matvec, Δzw)
+end
+
+function __make_ipm_linsolve_operator(M::GPUArraysCore.AbstractGPUArray,
+    zₖ::GPUArraysCore.AbstractGPUArray, wₖ::GPUArraysCore.AbstractGPUArray,
+    Δzw::GPUArraysCore.AbstractGPUArray, ::Val{batched}) where {batched}
+    L = size(zₖ, 1)
+    function matvec(v, u, p, t)
+        if batched
+            v = reshape(v, 2L, :)
+            u = reshape(u, 2L, :)
+        end
+        Δz, Δw = selectdim(u, 1, 1:L), selectdim(u, 1, (L + 1):(2L))
+        selectdim(v, 1, 1:L) .= Δw
+        selectdim(v, 1, 1:L) .= matmul(M, copy(Δz)) .- selectdim(v, 1, 1:L)
         selectdim(v, 1, (L + 1):(2L)) .= zₖ .* Δw .+ wₖ .* Δz
         return vec(v)
     end
