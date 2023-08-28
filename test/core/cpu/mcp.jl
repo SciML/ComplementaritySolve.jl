@@ -38,6 +38,37 @@ rng = StableRNG(0)
             end
         end
 
+        @testset "θ: $(θ)" for θ in feasible_parameters[2:end]
+            
+            @testset "Problem Function: $(func)" for func in (f, f!)
+                prob = MCP(func, u0, lower_bound, upper_bound, θ)
+
+                @testset "ForwardDiffMode : $(solver)" for solver  in  (
+                    NonlinearReformulation(:smooth, NewtonRaphson(),AutoSparseForwardDiff()),
+                    NonlinearReformulation(:minmax, NewtonRaphson(),AutoSparseForwardDiff())) 
+    
+                    sol = solve(prob, solver; verbose=false)
+    
+                    @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
+    
+                end
+
+                @testset "FiniteDiffMode : $(solver)" for solver  in  (
+                    NonlinearReformulation(:smooth, NewtonRaphson(),AutoSparseFiniteDiff()),
+                    NonlinearReformulation(:minmax, NewtonRaphson(),AutoSparseFiniteDiff())) 
+    
+                    sol = solve(prob, solver; verbose=false)
+    
+                    @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
+    
+                end
+
+            end
+            
+            
+        end
+        
+
         @testset "Adjoint Tests" begin
             function loss_function(θ, solver)
                 prob = MCP(f, u0, lower_bound, upper_bound, θ)
