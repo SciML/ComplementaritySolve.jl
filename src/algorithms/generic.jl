@@ -5,6 +5,6 @@ end
 
 @truncate_stacktrace NonlinearReformulation 1
 
-function NonlinearReformulation(method::Symbol=:smooth, nlsolver=NewtonRaphson(),diffmode = AutoSparseFiniteDiff())
+function NonlinearReformulation(method::Symbol=:smooth, nlsolver=NewtonRaphson(),diffmode = AutoForwardDiff())
     return NonlinearReformulation{method}(nlsolver,diffmode)
 end
