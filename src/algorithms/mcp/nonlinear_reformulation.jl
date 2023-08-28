@@ -1,6 +1,3 @@
-sd = SymbolicsSparsityDetection()
-adtype = AutoSparseFiniteDiff()
-
 for method in (:minmax, :smooth)
     algType = NonlinearReformulation{method}
     op = Symbol("$(method)_transform")
@@ -18,19 +15,17 @@ for method in (:minmax, :smooth)
         end
 
         residual = similar(u0)
-        #=J0= Float64.(Symbolics.jacobian_sparsity(f!,residual,u0,p))
-        colors = SparseDiffTools.matrix_colors(J0)=#
-        cache = sparse_jacobian_cache(adtype, sd, _f!,residual, u0)
+        sd_mcp = alg.diffmode isa SparseDiffTools.AbstractSparseADType ? SymbolicsSparsityDetection() : NoSparsityDetection()
+        cache = sparse_jacobian_cache(alg.diffmode, sd_mcp, _f!,residual, u0)
 
-        function jac!(J,u,θ)
-            function _f!(F,u)
-                f!(F,u,θ)
-                return F
-            end
-            sparse_jacobian!(J,adtype,cache,_f!,residual,u)
+        jac_prototype = SparseDiffTools.__init_𝒥(cache)
+
+        function jac!(J,u,p)
+            sparse_jacobian!(J,alg.diffmode,cache,_f!,residual,u)
+            return J
         end
 
-        _prob = NonlinearProblem(NonlinearFunction{true}(f!;jac=jac!), u0, p)
+        _prob = NonlinearProblem(NonlinearFunction{true}(f!;jac=jac!,jac_prototype), u0, p)
         sol = solve(_prob, alg.nlsolver; kwargs...)
 
         return MixedComplementaritySolution(sol.u, sol.resid, prob, alg, sol.retcode)
@@ -42,19 +37,16 @@ for method in (:minmax, :smooth)
             return f(u,p)
         end
         
-        #residual = similar(u0)
-        #J0 = Float64.(Symbolics.jacobian_sparsity(_f!,residual,u0,p))
-        #colors = SparseDiffTools.matrix_colors(J0)
-        cache = sparse_jacobian_cache(adtype, sd, _f,u0)
+        sd_mcp = alg.diffmode isa SparseDiffTools.AbstractSparseADType ? SymbolicsSparsityDetection() : NoSparsityDetection()
+        cache = sparse_jacobian_cache(alg.diffmode, sd_mcp, _f,u0)
+
+        jac_prototype = SparseDiffTools.__init_𝒥(cache)
         
-        function jac(u,θ)   
-            function _f(u)
-                return f(u,θ)
-            end
-            return sparse_jacobian(adtype,cache,_f,u)
+        function jac(u,p)   
+            return sparse_jacobian(alg.diffmode,cache,_f,u)
         end
 
-        _prob = NonlinearProblem(NonlinearFunction{false}(f;jac = jac), u0, p)
+        _prob = NonlinearProblem(NonlinearFunction{false}(f;jac = jac,jac_prototype), u0, p)
         sol = solve(_prob, alg.nlsolver; kwargs...)
 
         return MixedComplementaritySolution(sol.u, sol.resid, prob, alg, sol.retcode)
