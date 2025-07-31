@@ -1,6 +1,6 @@
 using ChainRulesCore, ComplementaritySolve, ComponentArrays, DiffEqBase, ForwardDiff,
-    LinearAlgebra, Optimization, OptimizationOptimisers, OrdinaryDiffEq, SciMLSensitivity,
-    SimpleNonlinearSolve, SparseArrays, StableRNGs, Statistics, SteadyStateDiffEq, Test
+      LinearAlgebra, Optimization, OptimizationOptimisers, OrdinaryDiffEq, SciMLSensitivity,
+      SimpleNonlinearSolve, SparseArrays, StableRNGs, Statistics, SteadyStateDiffEq, Test
 using Zygote
 
 const m₁ = 0.5f0
@@ -18,13 +18,14 @@ const 𝒸 = m₂ * l₁ * l₂
 const M = [𝒶+𝒷+2𝒸 𝒷+𝒸; 𝒷+𝒸 𝒷]
 const Jᵀ = Float32[-1 1; 0 0]
 const A = Float32[0 0 1 0;
-    0 0 0 1;
-    g/l₁ -(g * m₂)/(l₁ * m₁) 0 0;
-    -g/l₁ (g * (l₁ * m₁ + l₁ * m₂ + l₂ * m₂))/(l₁ * l₂ * m₁) 0 0]
-const B = reshape(Float32[0
-        0
-        -(l₁ + l₂) / (l₂ * m₁ * l₁^2)
-        (m₁ * l₁^2 + m₂ * (l₁ + l₂)^2) / (m₁ * m₂ * l₁^2 * l₂^2)],
+                  0 0 0 1;
+                  g/l₁ -(g * m₂)/(l₁ * m₁) 0 0;
+                  -g/l₁ (g * (l₁ * m₁ + l₁ * m₂ + l₂ * m₂))/(l₁ * l₂ * m₁) 0 0]
+const B = reshape(
+    Float32[0
+            0
+            -(l₁ + l₂) / (l₂ * m₁ * l₁^2)
+            (m₁ * l₁^2 + m₂ * (l₁ + l₂)^2) / (m₁ * m₂ * l₁^2 * l₂^2)],
     (4, 1))
 const D = vcat(zeros(Float32, 2, 2), inv(M) * Jᵀ)
 const a = 0.0f0
@@ -77,9 +78,12 @@ end
 
 function steady_state_test(θ)
     prob = LCS(x0, controller, (first(tspan), Inf32), θ, A, B, D, a, E, F, c)
-    solver = NaiveLCSAlgorithm(DynamicSS(Tsit5();
-            termination_condition=NLSolveTerminationCondition(NLSolveTerminationMode.AbsNorm;
-                abstol=1.0f-2, reltol=1.0f-2)), NonlinearReformulation())
+    solver = NaiveLCSAlgorithm(
+        DynamicSS(Tsit5();
+            termination_condition=NLSolveTerminationCondition(
+                NLSolveTerminationMode.AbsNorm;
+                abstol=1.0f-2, reltol=1.0f-2)),
+        NonlinearReformulation())
     sol = solve(prob, solver; abstol=1.0f-6, reltol=1.0f-6)
 
     @test sol isa SciMLBase.NonlinearSolution
@@ -162,7 +166,8 @@ end
 
         optprob = Optimization.OptimizationProblem(optf, optsol.u)
 
-        optsol = Optimization.solve(optprob, Adam(0.001); callback=callback_parameter_estim,
+        optsol = Optimization.solve(
+            optprob, Adam(0.001); callback=callback_parameter_estim,
             maxiters=1000)
 
         θ_estimated = optsol.u

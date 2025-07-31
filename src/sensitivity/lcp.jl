@@ -33,7 +33,7 @@ function __∇lcp(u::AM, ∂u, ∂ϕ₋∂u₋, M, ∂ϕ₋∂v₋, L, Lₘ, lin
 end
 
 @views function __solve_adjoint(prob::LinearComplementarityProblem,
-    sensealg::LinearComplementarityAdjoint, sol, ∂sol, u0, M, q; kwargs...)
+        sensealg::LinearComplementarityAdjoint, sol, ∂sol, u0, M, q; kwargs...)
     (__notangent(∂sol) || __notangent(∂sol.u)) && return (∂∅, ∂∅)
 
     u, ∂u = sol.u, ∂sol.u

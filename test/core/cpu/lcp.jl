@@ -80,7 +80,9 @@ include("../../test_utils.jl")
 
             __sizes_list = (((2, 2, 5), (2, 5)), ((2, 2), (2, 5)), ((2, 2, 1), (2, 5)),
                 ((2, 2, 5), (2, 1)), ((2, 2, 5), (2, 5)))
-            @testset "Batched Adjoint Problem: size(M) = $(szM), size(q) = $(szq)" for (szM, szq) in __sizes_list
+            @testset "Batched Adjoint Problem: size(M) = $(szM), size(q) = $(szq)" for (
+                szM, szq) in __sizes_list
+
                 M_ = rand(rng, Float32, szM...)
                 q_ = randn(rng, Float32, szq...)
 
@@ -134,7 +136,7 @@ include("../../test_utils.jl")
             "data/lcp_CPS_5.dat",
             "data/lcp_exp_murty.dat",
             "data/lcp_exp_murty2.dat",
-            "data/lcp_deudeu.dat",
+            "data/lcp_deudeu.dat"
         ]
             (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
             prob = LCP(M, q)
@@ -150,7 +152,7 @@ include("../../test_utils.jl")
             @testset "Netwon-Raphson: $(file_name)" for file_name in [
                 "data/lcp_CPS_2.dat",
                 "data/lcp_CPS_3.dat",
-                "data/lcp_ortiz.dat",
+                "data/lcp_ortiz.dat"
             ]
                 (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
                 prob = LCP(M, q)
@@ -162,7 +164,7 @@ include("../../test_utils.jl")
 
             @testset "Broyden: $(file_name)" for file_name in [
                 "data/lcp_CPS_3.dat", # iterative solvers test 
-                "data/lcp_enum_fails.dat", # direct solver LCP_enum
+                "data/lcp_enum_fails.dat" # direct solver LCP_enum
             ]
                 (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
                 prob = LCP(M, q)
@@ -179,7 +181,7 @@ include("../../test_utils.jl")
 
             @testset "BokhovenIterative: $(file_name)" for file_name in [
                 "data/lcp_trivial.dat",
-                "data/lcp_mmc.dat",
+                "data/lcp_mmc.dat"
             ]
                 (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
                 prob = LCP(M, q)
@@ -205,7 +207,7 @@ include("../../test_utils.jl")
         # Our implementation uses the same default parameters as siconos tests.
         @testset "Iterative Solvers: $(file_name)" for file_name in [
             "data/lcp_CPS_4.dat",
-            "data/lcp_CPS_4bis.dat",
+            "data/lcp_CPS_4bis.dat"
         ]
             (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
             prob = LCP(M, q)
@@ -218,7 +220,7 @@ include("../../test_utils.jl")
         #the problems were supposed to pass with Direct Solvers in siconos, such as Lemke
         @testset "Direct Solvers: $(file_name)" for file_name in [
             "data/lcp_Pang_isolated_sol.dat",
-            "data/lcp_Pang_isolated_sol_perturbed.dat",
+            "data/lcp_Pang_isolated_sol_perturbed.dat"
         ]
             (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
             prob = MCP(LCP(M, q))

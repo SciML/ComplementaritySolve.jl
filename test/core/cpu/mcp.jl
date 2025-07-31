@@ -18,7 +18,7 @@ rng = StableRNG(0)
             Float32[0.0, 0.0],
             # Float32[1.0, 0.0],  # Doesn't work yet
             # Float32[0.0, 1.0],  # Doesn't work yet
-            [rand(rng, Float32, 2) for _ in 1:10]...,
+            [rand(rng, Float32, 2) for _ in 1:10]...
         ]
 
         u0 = randn(rng, Float32, 4)
@@ -51,7 +51,8 @@ rng = StableRNG(0)
 
             θ = [2.0, -3.0]
             ∂θ_zygote = only(Zygote.gradient(loss_function_path, θ))
-            (∂θ_finitediff,) = FiniteDifferences.grad(central_fdm(3, 1), loss_function_path,
+            (∂θ_finitediff,) = FiniteDifferences.grad(
+                central_fdm(3, 1), loss_function_path,
                 θ)
             # FD cant differentiate through the PATH solver (C Code)
             ∂θ_forwarddiff = ForwardDiff.gradient(loss_function_nr, θ)

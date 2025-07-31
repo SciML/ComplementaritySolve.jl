@@ -3,10 +3,13 @@ struct PATHSolverAlgorithm <: AbstractComplementarityAlgorithm end
 # TODO: We might want to exploit sparsity using Symbolics.jl. Else PATH Solver won't be
 #       competitive with other solvers. See ParametricMCPs.jl for an example.
 function __solve(prob::MCP{iip}, alg::PATHSolverAlgorithm, u0, p; verbose::Bool=true,
-    kwargs...) where {iip}
+        kwargs...) where {iip}
     (; f, lb, ub) = prob
 
-    (u0, lb, ub, p) = map((u0, lb, ub, p)) do x
+    (u0,
+        lb,
+        ub,
+        p) = map((u0, lb, ub, p)) do x
         eltype(x) == Float64 && return x
         if verbose
             @warn "PATHSolver doesn't support Non Float64 ($(eltype(x))) inputs. Converted \
@@ -43,7 +46,7 @@ function __solve(prob::MCP{iip}, alg::PATHSolverAlgorithm, u0, p; verbose::Bool=
         return Cint(0)
     end
 
-    status, z, info = PATHSolver.solve_mcp(F!, J!, lb, ub, u0; silent=!verbose, kwargs...)
+    status, z, info = PATHSolver.solve_mcp(F!, J!, lb, ub, u0; silent=(!verbose), kwargs...)
     return MixedComplementaritySolution(z, info.residual, prob, alg,
         __pathsolver_status_to_return_code(status))
 end

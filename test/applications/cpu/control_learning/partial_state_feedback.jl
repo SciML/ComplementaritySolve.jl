@@ -1,6 +1,6 @@
 using Zygote, LinearAlgebra, SimpleNonlinearSolve, OrdinaryDiffEq, Optimization,
-    OptimizationOptimisers, SciMLSensitivity, Test, ComponentArrays, SparseArrays,
-    StableRNGs
+      OptimizationOptimisers, SciMLSensitivity, Test, ComponentArrays, SparseArrays,
+      StableRNGs
 using ComplementaritySolve
 
 # parameters 
@@ -51,7 +51,8 @@ stable_L = [-3.7 -0.6; -0.6 7.2]
 stable_θ = ComponentArray(; K=stable_K, L=stable_L)
 
 function controller(x, λ, p, _)
-    K = reshape(vcat(p.K[1], 0.0, p.K[2:4], 0.0, p.K[5:7], 0.0, p.K[8:10], 0.0, p.K[11:12]),
+    K = reshape(
+        vcat(p.K[1], 0.0, p.K[2:4], 0.0, p.K[5:7], 0.0, p.K[8:10], 0.0, p.K[11:12]),
         (k, n))
     return K * x .+ p.L * λ
 end

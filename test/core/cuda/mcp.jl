@@ -20,7 +20,7 @@ rng = StableRNG(0)
             Float32[0.0, 0.0],
             # Float32[1.0, 0.0],  # Doesn't work yet
             # Float32[0.0, 1.0],  # Doesn't work yet
-            [rand(rng, Float32, 2) for _ in 1:10]...,
+            [rand(rng, Float32, 2) for _ in 1:10]...
         ] .|> cu
 
         u0 = randn(rng, Float32, 4) |> cu
@@ -30,7 +30,8 @@ rng = StableRNG(0)
         @testset "θ: $(θ)" for θ in feasible_parameters
             @testset "Problem Function: $(func)" for func in (f, f!)
                 prob = MCP(func, u0, lower_bound, upper_bound, θ)
-                @testset "Solver: $(typeof(solver))" for solver in (NonlinearReformulation(:smooth),
+                @testset "Solver: $(typeof(solver))" for solver in
+                                                         (NonlinearReformulation(:smooth),
                     NonlinearReformulation(:minmax))
                     sol = solve(prob, solver; verbose=false)
 
