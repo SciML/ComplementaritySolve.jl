@@ -46,7 +46,7 @@ LinearComplementarityProblem(args...) = LinearComplementarityProblem{true}(args.
 
 for iip in (true, false)
     @eval function CRC.rrule(::Type{LinearComplementarityProblem{$iip}}, M, q, args...;
-        kwargs...)
+            kwargs...)
         prob = LinearComplementarityProblem{$iip}(M, q, args...; kwargs...)
         function ∇LinearComplementarityProblem(Δ)
             if __notangent(Δ)

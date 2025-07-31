@@ -10,7 +10,7 @@ BokhovenIterativeAlgorithm() = BokhovenIterativeAlgorithm(DEFAULT_NLSOLVER)
 ## NOTE: It is a steady state problem so we could in-principle use an ODE Solver
 for batched in (true, false)
     @eval @views function __solve(prob::LinearComplementarityProblem{iip, $batched},
-        alg::BokhovenIterativeAlgorithm, u0, M, q; kwargs...) where {iip}
+            alg::BokhovenIterativeAlgorithm, u0, M, q; kwargs...) where {iip}
         A = I➕x⁻¹(M)
         B = matmul(A, I➖x(M))
         b = -matmul(A, q)

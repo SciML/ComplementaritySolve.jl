@@ -1,6 +1,6 @@
 @views function __solve(prob::LinearComplementarityProblem{iip, true},
-    solver::AbstractComplementarityAlgorithm, u0, M, q; verbose::Bool=true,
-    kwargs...) where {iip}
+        solver::AbstractComplementarityAlgorithm, u0, M, q; verbose::Bool=true,
+        kwargs...) where {iip}
     if verbose
         @warn "Solver: $(nameof(typeof(solver))) doesn't support batched problems. Falling \
             back to iterating over the batch dimension. This is going to be slow!!" maxlog=1

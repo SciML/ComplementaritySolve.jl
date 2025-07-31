@@ -73,7 +73,9 @@ include("../../test_utils.jl")
 
             __sizes_list = (((2, 2, 5), (2, 5)), ((2, 2), (2, 5)), ((2, 2, 1), (2, 5)),
                 ((2, 2, 5), (2, 1)), ((2, 2, 5), (2, 5)))
-            @testset "Batched Adjoint Problem: size(M) = $(szM), size(q) = $(szq)" for (szM, szq) in __sizes_list
+            @testset "Batched Adjoint Problem: size(M) = $(szM), size(q) = $(szq)" for (
+                szM, szq) in __sizes_list
+
                 M_ = rand(rng, Float32, szM...) |> cu
                 q_ = randn(rng, Float32, szq...) |> cu
 

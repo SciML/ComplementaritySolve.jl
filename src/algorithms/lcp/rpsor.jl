@@ -18,7 +18,7 @@ RPGS(ρ=0.0; kwargs...) = RPSOR(; ω=1.0, ρ, kwargs...)
 # RPSOR Algorithm as described in Section 12.4.6 (Acary, Brogliato 2008)
 # zᵏ⁺¹ᵢ = max(0, zᵏᵢ − ω (Mᵢⱼ + ρ )⁻¹(qᵢ + ∑ⱼ Mᵢⱼ zᵏ⁺¹ⱼ + ∑ (Mᵢⱼ - ρ) zᵏⱼ))
 function __solve(prob::LinearComplementarityProblem{iip, false}, alg::RPSOR, u0, M, q;
-    maxiters=1000, kwargs...) where {iip}
+        maxiters=1000, kwargs...) where {iip}
     (; ω, ρ, tol) = alg
 
     z = copy(u0)

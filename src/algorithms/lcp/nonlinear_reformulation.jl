@@ -1,4 +1,5 @@
 for method in (:minmax, :smooth), B in (true, false)
+
     aType = NonlinearReformulation{method}
     op = Symbol("$(method)_transform")
 

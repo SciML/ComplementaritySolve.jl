@@ -1,6 +1,6 @@
 using Zygote, LinearAlgebra, SimpleNonlinearSolve, OrdinaryDiffEq, Optimization,
-    OptimizationOptimisers, SciMLSensitivity, SteadyStateDiffEq, Test, ComponentArrays,
-    StableRNGs
+      OptimizationOptimisers, SciMLSensitivity, SteadyStateDiffEq, Test, ComponentArrays,
+      StableRNGs
 using ComplementaritySolve
 
 const g = 9.81;
@@ -21,9 +21,9 @@ x0 = [10 * r_x[1], 0.0, r_x[2], r_x[3]]
 # dynamics of the cartpole system
 
 A = [0.0 0.0 1.0 0.0
-    0.0 0.0 0.0 1.0
-    0.0 (g * mp)/mc 0.0 0.0
-    0.0 g * (mc + mp)/(l * mc) 0.0 0.0]
+     0.0 0.0 0.0 1.0
+     0.0 (g * mp)/mc 0.0 0.0
+     0.0 g * (mc + mp)/(l * mc) 0.0 0.0]
 B = reshape([0.0; 0.0; 1 / mc; 1 / (l * mc)], (4, 1))
 
 D = [zeros(Float64, 3, 2); 1/(l * mp) -1/(l * mp)]
@@ -74,9 +74,12 @@ rng = StableRNG(0)
 
     @testset "Solve to Infinity (Steady-State)" begin
         prob = LCS(x0, controller, (first(tspan), Inf64), stable_θ, A, B, D, a, E, F, c)
-        solver = NaiveLCSAlgorithm(DynamicSS(Tsit5();
-                termination_condition=NLSolveTerminationCondition(NLSolveTerminationMode.AbsNorm;
-                    abstol=1e-2, reltol=1e-2)), NonlinearReformulation())
+        solver = NaiveLCSAlgorithm(
+            DynamicSS(Tsit5();
+                termination_condition=NLSolveTerminationCondition(
+                    NLSolveTerminationMode.AbsNorm;
+                    abstol=1e-2, reltol=1e-2)),
+            NonlinearReformulation())
         sol = solve(prob, solver; abstol=1e-3, reltol=1e-3)
 
         @test sol isa SciMLBase.NonlinearSolution

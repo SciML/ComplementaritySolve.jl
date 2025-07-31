@@ -4,7 +4,7 @@
 end
 
 function solve(prob::LinearComplementaritySystem{sstate}, alg::NaiveLCSAlgorithm;
-    ode_kwargs=(;), lcp_kwargs=(;), kwargs...) where {sstate}
+        ode_kwargs=(;), lcp_kwargs=(;), kwargs...) where {sstate}
     (; A, B, D, a, F, E, c, x0, controller, λ0, p, tspan) = prob
 
     function dxdt(x, p, t)

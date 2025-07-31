@@ -41,7 +41,7 @@ import LinearSolve: DefaultLinearSolver, DefaultAlgorithmChoice
 
 #### To be Upstreamed
 function LinearSolve.defaultalg(A::SciMLBase.AbstractSciMLOperator,
-    b::GPUArraysCore.AbstractGPUArray, assump::LinearSolve.OperatorAssumptions)
+        b::GPUArraysCore.AbstractGPUArray, assump::LinearSolve.OperatorAssumptions)
     alg_choice = if has_ldiv!(A)
         DefaultAlgorithmChoice.DirectLdiv!
     elseif !assump.issq
@@ -84,11 +84,11 @@ include("sensitivity/lcp.jl")
 include("sensitivity/mcp.jl")
 
 export LinearComplementarityProblem, MixedLinearComplementarityProblem,
-    NonlinearComplementarityProblem, MixedComplementarityProblem
+       NonlinearComplementarityProblem, MixedComplementarityProblem
 export LinearComplementaritySystem
 export LCP, MLCP, NCP, MCP, LCS  # Short aliases
 export BokhovenIterativeAlgorithm,
-    NonlinearReformulation, RPSOR, PGS, PSOR, RPGS, InteriorPointMethod
+       NonlinearReformulation, RPSOR, PGS, PSOR, RPGS, InteriorPointMethod
 export PATHSolverAlgorithm
 export NaiveLCSAlgorithm
 export LinearComplementarityAdjoint, MixedComplementarityAdjoint
