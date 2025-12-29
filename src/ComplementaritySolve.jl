@@ -5,18 +5,31 @@ module ComplementaritySolve
 # Before release we will clean things up
 
 ## Core / QOL Dependencies
-using ArrayInterfaceCore, ChainRulesCore, GPUArraysCore, SciMLBase
-using CommonSolve, ConcreteStructs
+using ArrayInterfaceCore: ArrayInterfaceCore
+using ChainRulesCore: ChainRulesCore, NoTangent, ZeroTangent
+using GPUArraysCore: GPUArraysCore
+using SciMLBase: SciMLBase, FunctionOperator, LinearProblem, NonlinearFunction,
+                 NonlinearProblem, ODEFunction, ODEProblem, ReturnCode,
+                 SteadyStateProblem, isinplace
+using CommonSolve: CommonSolve
+using ConcreteStructs: ConcreteStructs, @concrete
 ## Stdlibs
-using LinearAlgebra, Markdown, SparseArrays
+using LinearAlgebra: LinearAlgebra, Diagonal, I, diagind, mul!, norm, pinv, \, /
+using Markdown: Markdown, @doc_str
+using SparseArrays: SparseArrays
 ## SciML Dependencies
-using LinearSolve, SciMLOperators, SimpleNonlinearSolve, NonlinearSolve
+using LinearSolve: LinearSolve
+using SciMLOperators: SciMLOperators, has_ldiv!
+using SimpleNonlinearSolve: SimpleNonlinearSolve, SimpleNewtonRaphson
+using NonlinearSolve: NonlinearSolve
 ## AD Packages (for sensitivities & PATHSolver; move to extensions)
-using ForwardDiff, Zygote
+using ForwardDiff: ForwardDiff
+using Zygote: Zygote
 ## External Solvers (for PATHSolver; move to extensions)
-using PATHSolver
+using PATHSolver: PATHSolver
 ## Fast Batching Support
-using NNlib, Polyester
+using NNlib: NNlib, batched_mul, batched_mul!, batched_transpose, ⊠
+using Polyester: Polyester, @batch
 
 import CommonSolve: init, solve, solve!
 import ChainRulesCore as CRC
