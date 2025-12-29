@@ -137,6 +137,7 @@ end
     lb
     ub
     p
+    jac_prototype  # Optional sparse matrix for Jacobian sparsity pattern
 end
 
 @truncate_stacktrace MixedComplementarityProblem 1
@@ -149,7 +150,9 @@ function MCP(prob::NCP{iip}) where {iip}
     lb = zero(prob.u0)
     ub = similar(prob.u0)
     fill!(ub, eltype(prob.u0)(Inf))
-    return MCP{iip}(prob.f, prob.u0, lb, ub, prob.p)
+    return MCP{iip}(prob.f, prob.u0, lb, ub, prob.p, nothing)
 end
 
-MCP(f, u0, lb, ub, p) = MCP{SciMLBase.isinplace(f, 3)}(f, u0, lb, ub, p)
+function MCP(f, u0, lb, ub, p; jac_prototype=nothing)
+    return MCP{SciMLBase.isinplace(f, 3)}(f, u0, lb, ub, p, jac_prototype)
+end

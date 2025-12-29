@@ -13,6 +13,8 @@ using LinearAlgebra, Markdown, SparseArrays
 using LinearSolve, SciMLOperators, SimpleNonlinearSolve, NonlinearSolve
 ## AD Packages (for sensitivities & PATHSolver; move to extensions)
 using ForwardDiff, Zygote
+## Sparsity Detection and Sparse AD
+using SparseConnectivityTracer, SparseDiffTools
 ## External Solvers (for PATHSolver; move to extensions)
 using PATHSolver
 ## Fast Batching Support
@@ -67,6 +69,8 @@ include("utils.jl")
 include("problems/complementarity_problems.jl")
 include("problems/complementarity_systems.jl")
 
+include("sparsity.jl")
+
 include("algorithms/solve.jl")
 include("algorithms/generic.jl")
 include("algorithms/lcp/nonlinear_reformulation.jl")
@@ -93,6 +97,7 @@ export PATHSolverAlgorithm
 export NaiveLCSAlgorithm
 export LinearComplementarityAdjoint, MixedComplementarityAdjoint
 export LinearComplementaritySolution, MixedComplementaritySolution
+export compute_jacobian_sparsity
 export solve
 
 end

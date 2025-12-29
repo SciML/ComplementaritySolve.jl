@@ -21,7 +21,7 @@ end
         sensealg::MixedComplementarityAdjoint, sol, ∂sol, u0, p; kwargs...)
     (__notangent(∂sol) || __notangent(∂sol.u)) && return (∂∅,)
 
-    (; f, lb, ub) = prob
+    (; f, lb, ub, jac_prototype) = prob
     u, ∂u = sol.u, ∂sol.u
 
     if isinplace(prob)
@@ -35,12 +35,31 @@ end
 
     A₁ = ∂ϕ₊∂u₊ * ∂ϕ₋∂u₋
     A₂ = ∂ϕ₊∂v₊ * ∂ϕ₋∂u₋ + ∂ϕ₋∂v₋
+
+    # Compute Jacobian, using sparse methods if sparsity pattern is available
     if isinplace(prob)
-        # Using ForwardDiff for now. We can potentially use Enzyme.jl here
-        J = ForwardDiff.jacobian((y, u) -> f(y, u, p), fᵤ, u)
+        if jac_prototype !== nothing
+            # Use sparse Jacobian computation with coloring
+            colors = SparseDiffTools.matrix_colors(jac_prototype)
+            J = similar(jac_prototype, eltype(u))
+            fₚ = (y, x) -> f(y, x, p)
+            SparseDiffTools.forwarddiff_color_jacobian!(J, fₚ, u; colorvec=colors)
+        else
+            # Using ForwardDiff for now. We can potentially use Enzyme.jl here
+            J = ForwardDiff.jacobian((y, u) -> f(y, u, p), fᵤ, u)
+        end
         A = J' * A₁ .+ A₂
     else
-        if length(u) ≤ 50
+        if jac_prototype !== nothing
+            # Use sparse Jacobian computation with coloring
+            colors = SparseDiffTools.matrix_colors(jac_prototype)
+            J = similar(jac_prototype, eltype(u))
+            fₚ_oop = Base.Fix2(f, p)
+            # SparseDiffTools requires in-place function even for out-of-place
+            fₚ_iip = (y, x) -> (y.=fₚ_oop(x); y)
+            SparseDiffTools.forwarddiff_color_jacobian!(J, fₚ_iip, u; colorvec=colors)
+            A = J' * A₁ .+ A₂
+        elseif length(u) ≤ 50
             # Construct the Full Matrix
             A = only(Zygote.jacobian(Base.Fix2(f, p), u))' * A₁ .+ A₂
         else

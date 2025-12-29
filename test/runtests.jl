@@ -25,6 +25,9 @@ end
             @safetestset "Mixed Complementarity Problems" begin
                 include("core/cpu/mcp.jl")
             end
+            @safetestset "Sparsity Detection" begin
+                include("core/cpu/sparsity.jl")
+            end
         end
 
         @testif BACKEND_GROUP "CUDA" begin
