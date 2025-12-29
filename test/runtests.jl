@@ -58,6 +58,9 @@ end
             @safetestset "Aqua Quality Assurance" begin
                 include("aqua.jl")
             end
+            @safetestset "Explicit Imports" begin
+                include("explicit_imports.jl")
+            end
         end
     end
 end
