@@ -48,6 +48,7 @@ All `LCP`s, `MLCP`s, and `NCP`s can be converted to `MCP`s, and these solvers ca
 
 More details are WIP. Examples can be found in `test` directory.
 
+
 ## Current Unique Features of ComplementaritySolve.jl:
 
 * Supports batched problems for LCPs.
