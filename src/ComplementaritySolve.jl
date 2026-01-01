@@ -108,4 +108,6 @@ export LinearComplementarityAdjoint, MixedComplementarityAdjoint
 export LinearComplementaritySolution, MixedComplementaritySolution
 export solve
 
+include("precompilation.jl")
+
 end
