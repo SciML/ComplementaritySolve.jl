@@ -20,7 +20,7 @@ rng = StableRNG(0)
             Float32[0.0, 0.0],
             # Float32[1.0, 0.0],  # Doesn't work yet
             # Float32[0.0, 1.0],  # Doesn't work yet
-            [rand(rng, Float32, 2) for _ in 1:10]...
+            [rand(rng, Float32, 2) for _ in 1:10]...,
         ] .|> cu
 
         u0 = randn(rng, Float32, 4) |> cu
@@ -31,11 +31,13 @@ rng = StableRNG(0)
             @testset "Problem Function: $(func)" for func in (f, f!)
                 prob = MCP(func, u0, lower_bound, upper_bound, θ)
                 @testset "Solver: $(typeof(solver))" for solver in
-                                                         (NonlinearReformulation(:smooth),
-                    NonlinearReformulation(:minmax))
-                    sol = solve(prob, solver; verbose=false)
+                    (
+                        NonlinearReformulation(:smooth),
+                        NonlinearReformulation(:minmax),
+                    )
+                    sol = solve(prob, solver; verbose = false)
 
-                    @test sol.u[1:2]≈θ atol=1e-4 rtol=1e-4
+                    @test sol.u[1:2] ≈ θ atol = 1.0e-4 rtol = 1.0e-4
                 end
             end
         end
@@ -43,14 +45,16 @@ rng = StableRNG(0)
         @testset "Adjoint Tests" begin
             function loss_function(θ)
                 prob = MCP(f, u0, lower_bound, upper_bound, θ)
-                sol = solve(prob, NonlinearReformulation(:smooth);
-                    sensealg=MixedComplementarityAdjoint(), verbose=false)
+                sol = solve(
+                    prob, NonlinearReformulation(:smooth);
+                    sensealg = MixedComplementarityAdjoint(), verbose = false
+                )
                 return sum(sol.u)
             end
 
             function loss_function_cpu(θ)
                 prob = MCP(f, u0 |> Array, lower_bound |> Array, upper_bound |> Array, θ)
-                sol = solve(prob, NonlinearReformulation(:smooth); verbose=false)
+                sol = solve(prob, NonlinearReformulation(:smooth); verbose = false)
                 return sum(sol.u)
             end
 
@@ -58,7 +62,7 @@ rng = StableRNG(0)
             ∂θ_zygote = only(Zygote.gradient(loss_function, θ))
             ∂θ_forwarddiff = ForwardDiff.gradient(loss_function_cpu, Array(θ))
 
-            @test Array(∂θ_zygote)≈∂θ_forwarddiff atol=1e-6 rtol=1e-6
+            @test Array(∂θ_zygote) ≈ ∂θ_forwarddiff atol = 1.0e-6 rtol = 1.0e-6
         end
     end
 end

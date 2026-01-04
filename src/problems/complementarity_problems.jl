@@ -1,20 +1,20 @@
 abstract type AbstractComplementarityProblem{iip} end
 abstract type AbstractLinearComplementarityProblem{iip, batched} <:
-              AbstractComplementarityProblem{iip} end
+AbstractComplementarityProblem{iip} end
 abstract type AbstractNonlinearComplementarityProblem{iip} <:
-              AbstractComplementarityProblem{iip} end
+AbstractComplementarityProblem{iip} end
 
 SciMLBase.isinplace(::AbstractComplementarityProblem{iip}) where {iip} = iip
 isbatched(::AbstractLinearComplementarityProblem{I, B}) where {I, B} = B
 
 @concrete struct LinearComplementarityProblem{iip, batched} <:
-                 AbstractLinearComplementarityProblem{iip, batched}
+    AbstractLinearComplementarityProblem{iip, batched}
     M
     q
     u0
 end
 
-function LinearComplementarityProblem{iip}(M, q, u0=nothing) where {iip}
+function LinearComplementarityProblem{iip}(M, q, u0 = nothing) where {iip}
     # By default, set iip to true since that is faster
     if u0 !== nothing && ndims(u0) == 2 && ndims(M) == 2 && ndims(q) == 1
         # If u0 is batched while problem is not, then reshape the problem
@@ -45,8 +45,10 @@ end
 LinearComplementarityProblem(args...) = LinearComplementarityProblem{true}(args...)
 
 for iip in (true, false)
-    @eval function CRC.rrule(::Type{LinearComplementarityProblem{$iip}}, M, q, args...;
-            kwargs...)
+    @eval function CRC.rrule(
+            ::Type{LinearComplementarityProblem{$iip}}, M, q, args...;
+            kwargs...
+        )
         prob = LinearComplementarityProblem{$iip}(M, q, args...; kwargs...)
         function ∇LinearComplementarityProblem(Δ)
             if __notangent(Δ)
@@ -55,10 +57,10 @@ for iip in (true, false)
             else
                 if isbatched(prob)
                     if ndims(M) != ndims(Δ.M)
-                        ∂M = dropdims(sum(Δ.M; dims=ndims(Δ.M)); dims=ndims(Δ.M))
+                        ∂M = dropdims(sum(Δ.M; dims = ndims(Δ.M)); dims = ndims(Δ.M))
                     end
                     if ndims(q) != ndims(Δ.q)
-                        ∂q = dropdims(sum(Δ.q; dims=ndims(Δ.q)); dims=ndims(Δ.q))
+                        ∂q = dropdims(sum(Δ.q; dims = ndims(Δ.q)); dims = ndims(Δ.q))
                     end
                 end
                 @isdefined(∂M) || (∂M = Δ.M)
@@ -74,7 +76,7 @@ end
 
 const LCP = LinearComplementarityProblem
 
-function (prob::LCP{iip, batched})(M=prob.M, q=prob.q) where {iip, batched}
+function (prob::LCP{iip, batched})(M = prob.M, q = prob.q) where {iip, batched}
     ff = if iip
         function f!(out, u, θ)
             M = reshape(view(θ, 1:length(M)), size(M))
@@ -95,7 +97,7 @@ function (prob::LCP{iip, batched})(M=prob.M, q=prob.q) where {iip, batched}
 end
 
 @concrete struct MixedLinearComplementarityProblem{iip, batched} <:
-                 AbstractLinearComplementarityProblem{iip, batched}
+    AbstractLinearComplementarityProblem{iip, batched}
     M
     q
     u0
@@ -115,7 +117,7 @@ function MLCP(prob::LCP{iip, batched}) where {iip, batched}
 end
 
 @concrete struct NonlinearComplementarityProblem{iip, F <: Function} <:
-                 AbstractNonlinearComplementarityProblem{iip}
+    AbstractNonlinearComplementarityProblem{iip}
     f::F
     u0
     p
@@ -131,7 +133,7 @@ function NCP(prob::LCP{iip}) where {iip}
 end
 
 @concrete struct MixedComplementarityProblem{iip, F <: Function} <:
-                 AbstractNonlinearComplementarityProblem{iip}
+    AbstractNonlinearComplementarityProblem{iip}
     f::F
     u0
     lb
