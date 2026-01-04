@@ -14,5 +14,5 @@ function parse_lcp_data(filename)
     temp_line = split(file_lines[end], " ")
     q = parse.(Float64, filter(!=(""), temp_line))
 
-    return (; M=M, q=q)
+    return (; M = M, q = q)
 end

@@ -19,7 +19,7 @@ using PrecompileTools
         sol_pgs = solve(prob, PGS())
 
         # RPSOR with custom parameters
-        sol_rpsor = solve(prob, RPSOR(; ω=1.0, ρ=0.1))
+        sol_rpsor = solve(prob, RPSOR(; ω = 1.0, ρ = 0.1))
 
         # BokhovenIterativeAlgorithm for positive definite problems
         sol_bokh = solve(prob, BokhovenIterativeAlgorithm())
@@ -37,6 +37,6 @@ using PrecompileTools
         # Convert LCP to MCP and solve with PATH
         # This is a common workflow
         prob_mcp_from_lcp = MCP(prob)
-        sol_mcp_from_lcp = solve(prob_mcp_from_lcp, PATHSolverAlgorithm(); verbose=false)
+        sol_mcp_from_lcp = solve(prob_mcp_from_lcp, PATHSolverAlgorithm(); verbose = false)
     end
 end

@@ -46,7 +46,7 @@ function batched_matvec!(y::AM, A::AA3, x::AM, α, β)
     y_ = reshape(y, size(y, 1), 1, size(y, 2))
     x_ = reshape(x, size(x, 1), 1, size(x, 2))
     batched_mul!(y_, A, x_, α, β)
-    return dropdims(y_; dims=2)
+    return dropdims(y_; dims = 2)
 end
 
 ## Matmul with proper dispatches
@@ -75,7 +75,7 @@ __diagonal(x::AV) = Diagonal(x)
 function __make_block_diagonal_operator(x::AA3)
     L, M, N = size(x)  # L == M
     @views function matvec(v::AV, u::AV, p, t)
-        @batch per=core for i in 1:N
+        @batch per = core for i in 1:N
             mul!(v[((i - 1) * L + 1):(i * L)], x[:, :, i], u[((i - 1) * L + 1):(i * L)])
         end
         return v

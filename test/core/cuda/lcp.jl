@@ -16,26 +16,29 @@ include("../../test_utils.jl")
 
         prob = LinearComplementarityProblem(A, q)
 
-        @testset "solver: $(nameof(typeof(solver)))" for solver in [InteriorPointMethod(),
-            NonlinearReformulation(), BokhovenIterativeAlgorithm()]
+        @testset "solver: $(nameof(typeof(solver)))" for solver in [
+                InteriorPointMethod(),
+                NonlinearReformulation(), BokhovenIterativeAlgorithm(),
+            ]
             sol = solve(prob, solver)
 
             u = Array(sol.u)
-            @test u≈[4.0 / 3, 7.0 / 3] rtol=1e-3
+            @test u ≈ [4.0 / 3, 7.0 / 3] rtol = 1.0e-3
             w = Array(A * sol.u .+ q)
-            @test w≈[0.0, 0.0] atol=1e-3
+            @test w ≈ [0.0, 0.0] atol = 1.0e-3
         end
 
         @testset "Batched Version" begin
             prob = LinearComplementarityProblem(A, q, rand(rng, 2, 4) |> cu)
 
             @testset "solver: $(nameof(typeof(solver)))" for solver in [
-                BokhovenIterativeAlgorithm(), InteriorPointMethod(),
-                NonlinearReformulation()]
+                    BokhovenIterativeAlgorithm(), InteriorPointMethod(),
+                    NonlinearReformulation(),
+                ]
                 sol = solve(prob, solver)
 
-                @test all(z -> ≈(Array(z), [4.0 / 3, 7.0 / 3]; rtol=1e-3), eachcol(sol.u))
-                @test all(z -> ≈(Array(A * z .+ q), [0.0, 0.0]; atol=1e-3), eachcol(sol.u))
+                @test all(z -> ≈(Array(z), [4.0 / 3, 7.0 / 3]; rtol = 1.0e-3), eachcol(sol.u))
+                @test all(z -> ≈(Array(A * z .+ q), [0.0, 0.0]; atol = 1.0e-3), eachcol(sol.u))
             end
         end
 
@@ -51,7 +54,7 @@ include("../../test_utils.jl")
                         return loss_function(sol.u)
                     end
 
-                    θ = ComponentArray((; A=Array(A), q=Array(q)))
+                    θ = ComponentArray((; A = Array(A), q = Array(q)))
                     ∂θ_fd = ForwardDiff.gradient(θ) do θ
                         prob = LinearComplementarityProblem{false}(θ.A, θ.q, Array(u0))
                         sol = solve(prob, solver)
@@ -60,8 +63,8 @@ include("../../test_utils.jl")
 
                     @test ∂A !== nothing && !iszero(∂A) && size(∂A) == size(A)
                     @test ∂q !== nothing && !iszero(∂q) && size(∂q) == size(q)
-                    @test Array(∂A)≈∂θ_fd.A atol=1e-3 rtol=1e-3
-                    @test Array(∂q)≈∂θ_fd.q atol=1e-3 rtol=1e-3
+                    @test Array(∂A) ≈ ∂θ_fd.A atol = 1.0e-3 rtol = 1.0e-3
+                    @test Array(∂q) ≈ ∂θ_fd.q atol = 1.0e-3 rtol = 1.0e-3
 
                     @test_nowarn Zygote.gradient(A, q) do M, q
                         prob = LinearComplementarityProblem{true}(M, q, u0)
@@ -71,10 +74,13 @@ include("../../test_utils.jl")
                 end
             end
 
-            __sizes_list = (((2, 2, 5), (2, 5)), ((2, 2), (2, 5)), ((2, 2, 1), (2, 5)),
-                ((2, 2, 5), (2, 1)), ((2, 2, 5), (2, 5)))
+            __sizes_list = (
+                ((2, 2, 5), (2, 5)), ((2, 2), (2, 5)), ((2, 2, 1), (2, 5)),
+                ((2, 2, 5), (2, 1)), ((2, 2, 5), (2, 5)),
+            )
             @testset "Batched Adjoint Problem: size(M) = $(szM), size(q) = $(szq)" for (
-                szM, szq) in __sizes_list
+                    szM, szq,
+                ) in __sizes_list
 
                 M_ = rand(rng, Float32, szM...) |> cu
                 q_ = randn(rng, Float32, szq...) |> cu
@@ -86,7 +92,7 @@ include("../../test_utils.jl")
                         return loss_function(sol.u)
                     end
 
-                    θ = ComponentArray((; M=Array(M_), q=Array(q_)))
+                    θ = ComponentArray((; M = Array(M_), q = Array(q_)))
                     ∂θ_fd = ForwardDiff.gradient(θ) do θ
                         prob = LinearComplementarityProblem{false}(θ.M, θ.q)
                         sol = solve(prob)
@@ -95,8 +101,8 @@ include("../../test_utils.jl")
 
                     @test ∂M !== nothing && size(∂M) == size(M_)
                     @test ∂q !== nothing && size(∂q) == size(q_)
-                    @test Array(∂M)≈∂θ_fd.M atol=1e-2 rtol=1e-2
-                    @test Array(∂q)≈∂θ_fd.q atol=1e-2 rtol=1e-2
+                    @test Array(∂M) ≈ ∂θ_fd.M atol = 1.0e-2 rtol = 1.0e-2
+                    @test Array(∂q) ≈ ∂θ_fd.q atol = 1.0e-2 rtol = 1.0e-2
 
                     # We can't check for correctness with FwdDiff & FiniteDifferences
                     # for inplace problems since the in-place batched solvers are not as

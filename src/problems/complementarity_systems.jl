@@ -23,7 +23,7 @@ LinearComplementaritySystem describes the following system:
 [1] Aydinoglu, Alp, Victor M. Preciado, and Michael Posa. "Contact-aware controller design for complementarity systems." 2020 IEEE International Conference on Robotics and Automation (ICRA). IEEE, 2020.
 """
 @concrete struct LinearComplementaritySystem{sstate, controllerType <: Function} <:
-                 AbstractComplementaritySystem{false}
+    AbstractComplementaritySystem{false}
     x0
     controller::controllerType
     λ0

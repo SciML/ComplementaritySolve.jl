@@ -17,8 +17,10 @@ function __fixed_vecjac_operator(f, y, p, A₁, A₂)
     return FunctionOperator(f_operator!, vec(input), vec(output))
 end
 
-@views function __solve_adjoint(prob::MixedComplementarityProblem,
-        sensealg::MixedComplementarityAdjoint, sol, ∂sol, u0, p; kwargs...)
+@views function __solve_adjoint(
+        prob::MixedComplementarityProblem,
+        sensealg::MixedComplementarityAdjoint, sol, ∂sol, u0, p; kwargs...
+    )
     (__notangent(∂sol) || __notangent(∂sol.u)) && return (∂∅,)
 
     (; f, lb, ub) = prob

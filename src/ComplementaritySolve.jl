@@ -9,8 +9,8 @@ using ArrayInterfaceCore: ArrayInterfaceCore
 using ChainRulesCore: ChainRulesCore, NoTangent, ZeroTangent
 using GPUArraysCore: GPUArraysCore
 using SciMLBase: SciMLBase, FunctionOperator, LinearProblem, NonlinearFunction,
-                 NonlinearProblem, ODEFunction, ODEProblem, ReturnCode,
-                 SteadyStateProblem, isinplace
+    NonlinearProblem, ODEFunction, ODEProblem, ReturnCode,
+    SteadyStateProblem, isinplace
 using CommonSolve: CommonSolve
 using ConcreteStructs: ConcreteStructs, @concrete
 ## Stdlibs
@@ -44,7 +44,7 @@ const AV = AbstractVector
 const AM = AbstractMatrix
 const AA3 = AbstractArray{T, 3} where {T}
 
-const DEFAULT_NLSOLVER = SimpleNewtonRaphson(; batched=true)
+const DEFAULT_NLSOLVER = SimpleNewtonRaphson(; batched = true)
 
 ### ----- Type Piracy Starts ----- ###
 ArrayInterfaceCore.can_setindex(::Type{<:AbstractFill}) = false
@@ -53,8 +53,10 @@ ArrayInterfaceCore.can_setindex(::Zygote.OneElement) = false
 import LinearSolve: DefaultLinearSolver, DefaultAlgorithmChoice
 
 #### To be Upstreamed
-function LinearSolve.defaultalg(A::SciMLBase.AbstractSciMLOperator,
-        b::GPUArraysCore.AbstractGPUArray, assump::LinearSolve.OperatorAssumptions)
+function LinearSolve.defaultalg(
+        A::SciMLBase.AbstractSciMLOperator,
+        b::GPUArraysCore.AbstractGPUArray, assump::LinearSolve.OperatorAssumptions
+    )
     alg_choice = if has_ldiv!(A)
         DefaultAlgorithmChoice.DirectLdiv!
     elseif !assump.issq
@@ -97,11 +99,11 @@ include("sensitivity/lcp.jl")
 include("sensitivity/mcp.jl")
 
 export LinearComplementarityProblem, MixedLinearComplementarityProblem,
-       NonlinearComplementarityProblem, MixedComplementarityProblem
+    NonlinearComplementarityProblem, MixedComplementarityProblem
 export LinearComplementaritySystem
 export LCP, MLCP, NCP, MCP, LCS  # Short aliases
 export BokhovenIterativeAlgorithm,
-       NonlinearReformulation, RPSOR, PGS, PSOR, RPGS, InteriorPointMethod
+    NonlinearReformulation, RPSOR, PGS, PSOR, RPGS, InteriorPointMethod
 export PATHSolverAlgorithm
 export NaiveLCSAlgorithm
 export LinearComplementarityAdjoint, MixedComplementarityAdjoint

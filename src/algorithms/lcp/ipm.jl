@@ -3,17 +3,17 @@
     η
 end
 
-function InteriorPointMethod(linsolve=nothing; tolerance=1.0f-5)
+function InteriorPointMethod(linsolve = nothing; tolerance = 1.0f-5)
     return InteriorPointMethod(linsolve, tolerance)
 end
 
 @truncate_stacktrace InteriorPointMethod
 
-function __feasible_steplength(x, Δx, cache; dims=:)
+function __feasible_steplength(x, Δx, cache; dims = :)
     T = eltype(x)
     cache .= x ./ (Δx .+ eps(T))
     T_max = typemax(T)
-    η = minimum(zᵢ -> ifelse(zᵢ ≥ 0, T_max, -zᵢ), cache; dims, init=T_max)
+    η = minimum(zᵢ -> ifelse(zᵢ ≥ 0, T_max, -zᵢ), cache; dims, init = T_max)
     return min(T(0.999) * η, T(1))
 end
 
@@ -33,9 +33,11 @@ function __make_ipm_linsolve_operator(M, zₖ, wₖ, Δzw, ::Val{batched}) where
     return FunctionOperator(matvec, Δzw)
 end
 
-function __make_ipm_linsolve_operator(M::GPUArraysCore.AbstractGPUArray,
+function __make_ipm_linsolve_operator(
+        M::GPUArraysCore.AbstractGPUArray,
         zₖ::GPUArraysCore.AbstractGPUArray, wₖ::GPUArraysCore.AbstractGPUArray,
-        Δzw::GPUArraysCore.AbstractGPUArray, ::Val{batched}) where {batched}
+        Δzw::GPUArraysCore.AbstractGPUArray, ::Val{batched}
+    ) where {batched}
     L = size(zₖ, 1)
     function matvec(v, u, p, t)
         if batched
@@ -53,9 +55,11 @@ end
 
 ## For details see https://sites.math.washington.edu/~burke/crs/408f/notes/lcp/lcp.pdf
 for batched in (true, false)
-    @eval @views function __solve(prob::LinearComplementarityProblem{iip, $batched},
-            alg::InteriorPointMethod, u0, M, q; maxiters=1000, abstol=nothing, reltol=nothing,
-            kwargs...) where {iip}
+    @eval @views function __solve(
+            prob::LinearComplementarityProblem{iip, $batched},
+            alg::InteriorPointMethod, u0, M, q; maxiters = 1000, abstol = nothing, reltol = nothing,
+            kwargs...
+        ) where {iip}
         @assert abstol === nothing&&reltol === nothing "Use the tolerance keyword argument \
                                                         while Solver construction instead"
         T = eltype(u0)
@@ -84,7 +88,7 @@ for batched in (true, false)
         Δzw = similar(z, 2L, N)
         A_ = __make_ipm_linsolve_operator(M, z, w, vec(Δzw), Val($batched))
         b_ = similar(z, 2L, N)
-        lincache = init(LinearProblem(A_, vec(b_); u0=vec(Δzw)), alg.linsolve; kwargs...)
+        lincache = init(LinearProblem(A_, vec(b_); u0 = vec(Δzw)), alg.linsolve; kwargs...)
 
         iter = 1
         while τ > η && ρ > η && iter ≤ maxiters
@@ -108,8 +112,10 @@ for batched in (true, false)
             matmul!(w_cache, M, z, true, true)
             ρ = norm(w_cache, Inf)
 
-            σ = ifelse(τ ≤ η && ρ > η, T(1),
-                min(T(0.5), (1 - η₁)^2, (1 - η₂)^2, abs(ρ - τ) / (ρ + 10 * τ)))
+            σ = ifelse(
+                τ ≤ η && ρ > η, T(1),
+                min(T(0.5), (1 - η₁)^2, (1 - η₂)^2, abs(ρ - τ) / (ρ + 10 * τ))
+            )
 
             iter += 1
         end
