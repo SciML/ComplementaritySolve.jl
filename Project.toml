@@ -1,7 +1,7 @@
 name = "ComplementaritySolve"
 uuid = "b40a91a3-bdaf-4e1c-b965-8c278a33a8d3"
-version = "0.1.0"
 authors = ["Avik Pal <avikpal@mit.edu>"]
+version = "0.1.0"
 
 [deps]
 ArrayInterfaceCore = "30b0a656-2188-435a-8636-2ec0e6a096e2"
@@ -28,7 +28,5 @@ TruncatedStacktraces = "781d530d-4396-4725-bb49-402e4bee1e77"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
-ExplicitImports = "1.14.0"
-PrecompileTools = "1"
 SimpleNonlinearSolve = "0.1.17"
 julia = "1.9"
