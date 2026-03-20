@@ -74,13 +74,14 @@ __diagonal(x::AV) = Diagonal(x)
 
 function __make_block_diagonal_operator(x::AA3)
     L, M, N = size(x)  # L == M
-    @views function matvec(v::AV, u::AV, p, t)
+    @views function matvec(v::AV, u::AV, _u, p, t)
         @batch per = core for i in 1:N
             mul!(v[((i - 1) * L + 1):(i * L)], x[:, :, i], u[((i - 1) * L + 1):(i * L)])
         end
         return v
     end
-    return FunctionOperator(matvec, similar(x, N * L))
+    proto = similar(x, N * L)
+    return FunctionOperator(matvec, proto, similar(proto); isinplace = true)
 end
 
 function __check_correct_batching(args...)

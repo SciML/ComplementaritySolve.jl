@@ -41,8 +41,12 @@ rng = StableRNG(0)
         end
 
         @testset "Adjoint Tests" begin
+            # Use Float64 for adjoint tests to avoid ForwardDiff type promotion issues
+            u0_f64 = Float64.(u0)
+            lb_f64 = Float64.(lower_bound)
+            ub_f64 = Float64.(upper_bound)
             function loss_function(θ, solver)
-                prob = MCP(f, u0, lower_bound, upper_bound, θ)
+                prob = MCP(f, u0_f64, lb_f64, ub_f64, θ)
                 sol = solve(
                     prob, solver; sensealg = MixedComplementarityAdjoint(),
                     verbose = false

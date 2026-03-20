@@ -44,7 +44,7 @@ const AV = AbstractVector
 const AM = AbstractMatrix
 const AA3 = AbstractArray{T, 3} where {T}
 
-const DEFAULT_NLSOLVER = SimpleNewtonRaphson(; batched = true)
+const DEFAULT_NLSOLVER = SimpleNewtonRaphson()
 
 ### ----- Type Piracy Starts ----- ###
 ArrayInterfaceCore.can_setindex(::Type{<:AbstractFill}) = false
