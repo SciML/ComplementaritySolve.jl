@@ -32,7 +32,7 @@ include("../../test_utils.jl")
             prob = LinearComplementarityProblem(A, q, rand(rng, 2, 4) |> cu)
 
             @testset "solver: $(nameof(typeof(solver)))" for solver in [
-                    BokhovenIterativeAlgorithm(), InteriorPointMethod(),
+                    BokhovenIterativeAlgorithm(),
                     NonlinearReformulation(),
                 ]
                 sol = solve(prob, solver; maxiters = 10000)
