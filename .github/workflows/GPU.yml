@@ -19,7 +19,7 @@ concurrency:
 jobs:
   cuda-tests:
     name: "CUDA ${{ matrix.testing_group }}"
-    runs-on: [self-hosted, Linux, X64, gpu]
+    runs-on: [self-hosted, gpu-v100]
     timeout-minutes: 240
     strategy:
       fail-fast: false
