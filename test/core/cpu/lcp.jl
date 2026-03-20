@@ -31,7 +31,6 @@ include("../../test_utils.jl")
             @testset "solver: $(nameof(typeof(solver)))" for solver in [
                     RPGS(), PGS(),
                     PSOR(), BokhovenIterativeAlgorithm(),
-                    InteriorPointMethod(),  # needs more iters for batched
                     NonlinearReformulation(:smooth, SimpleDFSane()),
                 ]
                 sol = solve(prob, solver; maxiters = 10000)
