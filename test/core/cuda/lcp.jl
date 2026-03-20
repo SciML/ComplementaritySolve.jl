@@ -35,7 +35,7 @@ include("../../test_utils.jl")
                     BokhovenIterativeAlgorithm(), InteriorPointMethod(),
                     NonlinearReformulation(),
                 ]
-                sol = solve(prob, solver)
+                sol = solve(prob, solver; maxiters = 10000)
 
                 @test all(z -> ≈(Array(z), [4.0 / 3, 7.0 / 3]; rtol = 1.0e-3), eachcol(sol.u))
                 @test all(z -> ≈(Array(A * z .+ q), [0.0, 0.0]; atol = 1.0e-3), eachcol(sol.u))
