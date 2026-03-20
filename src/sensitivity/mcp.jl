@@ -9,12 +9,12 @@ MixedComplementarityAdjoint() = MixedComplementarityAdjoint(nothing)
 function __fixed_vecjac_operator(f, y, p, A₁, A₂)
     input, pb_f = Zygote.pullback(x -> f(x, p), y)
     output = only(pb_f(input))
-    function f_operator!(du, u, p, t)
+    function f_operator!(du, u, _u, p, t)
         λ = reshape(u, size(input))
         du .= vec(only(pb_f(A₁ * λ)) .+ A₂ * λ)
         return du
     end
-    return FunctionOperator(f_operator!, vec(input), vec(output))
+    return FunctionOperator(f_operator!, vec(input), vec(output); isinplace = true)
 end
 
 @views function __solve_adjoint(
