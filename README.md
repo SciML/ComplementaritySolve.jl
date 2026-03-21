@@ -42,7 +42,7 @@ All `LCP`s, `MLCP`s, and `NCP`s can be converted to `MCP`s, and these solvers ca
 | MixedComplementarityAdjoint  | MCP          |                    | :heavy_check_mark: | :heavy_check_mark: |         |
 
 [^1]: Solvers internally using `NonlinearSolve.jl` need to use a CUDA compatible solver
-(like `SimpleNewtonRaphson(; batched=true)`).
+(like `SimpleNewtonRaphson()`).
 
 ## Usage
 

@@ -19,7 +19,7 @@ using Markdown: Markdown, @doc_str
 using SparseArrays: SparseArrays
 ## SciML Dependencies
 using LinearSolve: LinearSolve
-using SciMLOperators: SciMLOperators, has_ldiv!
+## SciMLOperators is used transitively via SciMLBase (FunctionOperator)
 using SimpleNonlinearSolve: SimpleNonlinearSolve, SimpleNewtonRaphson
 using NonlinearSolve: NonlinearSolve
 ## AD Packages (for sensitivities & PATHSolver; move to extensions)
@@ -44,34 +44,14 @@ const AV = AbstractVector
 const AM = AbstractMatrix
 const AA3 = AbstractArray{T, 3} where {T}
 
-const DEFAULT_NLSOLVER = SimpleNewtonRaphson(; batched = true)
+const DEFAULT_NLSOLVER = SimpleNewtonRaphson()
 
 ### ----- Type Piracy Starts ----- ###
 ArrayInterfaceCore.can_setindex(::Type{<:AbstractFill}) = false
 ArrayInterfaceCore.can_setindex(::Zygote.OneElement) = false
 
-import LinearSolve: DefaultLinearSolver, DefaultAlgorithmChoice
-
-#### To be Upstreamed
-function LinearSolve.defaultalg(
-        A::SciMLBase.AbstractSciMLOperator,
-        b::GPUArraysCore.AbstractGPUArray, assump::LinearSolve.OperatorAssumptions
-    )
-    alg_choice = if has_ldiv!(A)
-        DefaultAlgorithmChoice.DirectLdiv!
-    elseif !assump.issq
-        m, n = size(A)
-        if m < n
-            DefaultAlgorithmChoice.KrylovJL_CRAIGMR
-        else
-            DefaultAlgorithmChoice.KrylovJL_LSMR
-        end
-    else
-        DefaultAlgorithmChoice.KrylovJL_GMRES
-    end
-    return DefaultLinearSolver(alg_choice)
-end
 ### ------ Type Piracy Ends ------ ###
+# NOTE: LinearSolve.defaultalg for AbstractSciMLOperator + AbstractGPUArray was upstreamed
 
 abstract type AbstractComplementarityAlgorithm end
 abstract type AbstractComplementaritySystemAlgorithm end

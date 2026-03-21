@@ -81,13 +81,7 @@ rng = StableRNG(0)
     @testset "Solve to Infinity (Steady-State)" begin
         prob = LCS(x0, controller, (first(tspan), Inf64), stable_θ, A, B, D, a, E, F, c)
         solver = NaiveLCSAlgorithm(
-            DynamicSS(
-                Tsit5();
-                termination_condition = NLSolveTerminationCondition(
-                    NLSolveTerminationMode.AbsNorm;
-                    abstol = 1.0e-2, reltol = 1.0e-2
-                )
-            ),
+            DynamicSS(Tsit5()),
             NonlinearReformulation()
         )
         sol = solve(prob, solver; abstol = 1.0e-3, reltol = 1.0e-3)

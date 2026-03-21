@@ -19,7 +19,7 @@ end
 
 function __make_ipm_linsolve_operator(M, zₖ, wₖ, Δzw, ::Val{batched}) where {batched}
     L = size(zₖ, 1)
-    function matvec(v, u, p, t)
+    function matvec(v, u, _u, p, t)
         if batched
             v = reshape(v, 2L, :)
             u = reshape(u, 2L, :)
@@ -30,7 +30,7 @@ function __make_ipm_linsolve_operator(M, zₖ, wₖ, Δzw, ::Val{batched}) where
         selectdim(v, 1, (L + 1):(2L)) .= zₖ .* Δw .+ wₖ .* Δz
         return vec(v)
     end
-    return FunctionOperator(matvec, Δzw)
+    return FunctionOperator(matvec, Δzw, similar(Δzw); isinplace = true)
 end
 
 function __make_ipm_linsolve_operator(
@@ -39,7 +39,7 @@ function __make_ipm_linsolve_operator(
         Δzw::GPUArraysCore.AbstractGPUArray, ::Val{batched}
     ) where {batched}
     L = size(zₖ, 1)
-    function matvec(v, u, p, t)
+    function matvec(v, u, _u, p, t)
         if batched
             v = reshape(v, 2L, :)
             u = reshape(u, 2L, :)
@@ -50,7 +50,7 @@ function __make_ipm_linsolve_operator(
         selectdim(v, 1, (L + 1):(2L)) .= zₖ .* Δw .+ wₖ .* Δz
         return vec(v)
     end
-    return FunctionOperator(matvec, Δzw)
+    return FunctionOperator(matvec, Δzw, similar(Δzw); isinplace = true)
 end
 
 ## For details see https://sites.math.washington.edu/~burke/crs/408f/notes/lcp/lcp.pdf

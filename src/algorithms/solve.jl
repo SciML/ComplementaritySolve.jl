@@ -36,7 +36,7 @@ __default_sensealg(::MCP) = MixedComplementarityAdjoint()
 function __default_solver(::T) where {T <: AbstractComplementarityProblem}
     return error("No default solver for type $(T). Please specify a solver.")
 end
-## Defaulting to SimpleNewtonRaphson(; batched=true) since it is the most robust
+## Defaulting to SimpleNewtonRaphson() since it is the most robust
 ## and works well with inplace/out of place and also works OOTB with GPUs
 __default_solver(::Union{LCP, MCP}) = NonlinearReformulation(:smooth, DEFAULT_NLSOLVER)
 

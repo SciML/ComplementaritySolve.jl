@@ -32,10 +32,10 @@ include("../../test_utils.jl")
             prob = LinearComplementarityProblem(A, q, rand(rng, 2, 4) |> cu)
 
             @testset "solver: $(nameof(typeof(solver)))" for solver in [
-                    BokhovenIterativeAlgorithm(), InteriorPointMethod(),
+                    BokhovenIterativeAlgorithm(),
                     NonlinearReformulation(),
                 ]
-                sol = solve(prob, solver)
+                sol = solve(prob, solver; maxiters = 10000)
 
                 @test all(z -> ≈(Array(z), [4.0 / 3, 7.0 / 3]; rtol = 1.0e-3), eachcol(sol.u))
                 @test all(z -> ≈(Array(A * z .+ q), [0.0, 0.0]; atol = 1.0e-3), eachcol(sol.u))

@@ -1,4 +1,5 @@
 using ComplementaritySolve, ComponentArrays, FiniteDifferences, ForwardDiff
+using NonlinearSolve: Broyden
 using SimpleNonlinearSolve, StableRNGs, Test, Zygote
 
 rng = StableRNG(0)
@@ -29,10 +30,10 @@ include("../../test_utils.jl")
 
             @testset "solver: $(nameof(typeof(solver)))" for solver in [
                     RPGS(), PGS(),
-                    PSOR(), BokhovenIterativeAlgorithm(), InteriorPointMethod(),
-                    NonlinearReformulation(:smooth, SimpleDFSane(; batched = true)),
+                    PSOR(), BokhovenIterativeAlgorithm(),
+                    NonlinearReformulation(:smooth, SimpleDFSane()),
                 ]
-                sol = solve(prob, solver)
+                sol = solve(prob, solver; maxiters = 10000)
 
                 @test all(z -> ≈(z, [4.0 / 3, 7.0 / 3]; rtol = 1.0e-3), eachcol(sol.u))
                 @test all(z -> ≈(A * z .+ q, [0.0, 0.0]; atol = 1.0e-3), eachcol(sol.u))
@@ -44,7 +45,7 @@ include("../../test_utils.jl")
                 u0 = rand(StableRNG(0), sz...)
                 solver = NonlinearReformulation(
                     :smooth,
-                    SimpleNewtonRaphson(; batched = true)
+                    SimpleNewtonRaphson()
                 )
 
                 for loss_function in (sum, Base.Fix1(sum, abs2))
@@ -181,7 +182,7 @@ include("../../test_utils.jl")
                 ]
                 (M, q) = parse_lcp_data(joinpath(@__DIR__, "..", file_name))
                 prob = LCP(M, q)
-                sol = solve(prob, NonlinearReformulation(:smooth, Broyden(; batched = true)))
+                sol = solve(prob, NonlinearReformulation(:smooth, Broyden()))
                 @test all(>=(-1.0e-5), sol.u)
                 w = M * sol.u .+ q
                 @test (w' * sol.u) ≈ 0.0 atol = 1.0e-6

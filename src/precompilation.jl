@@ -1,4 +1,4 @@
-using PrecompileTools
+using PrecompileTools: @setup_workload, @compile_workload
 
 @setup_workload begin
     # Minimal setup - avoid heavy computations
@@ -24,8 +24,9 @@ using PrecompileTools
         # BokhovenIterativeAlgorithm for positive definite problems
         sol_bokh = solve(prob, BokhovenIterativeAlgorithm())
 
-        # InteriorPointMethod
-        sol_ipm = solve(prob, InteriorPointMethod())
+        # InteriorPointMethod — skip precompilation as it uses FunctionOperator
+        # which has API changes across SciMLOperators versions
+        # sol_ipm = solve(prob, InteriorPointMethod())
 
         # NonlinearReformulation with default solver (common path)
         # This exercises the NonlinearSolve integration
