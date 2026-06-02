@@ -163,7 +163,7 @@ include("../../test_utils.jl")
         @testset "NonlinearReformulation" begin
 
             # problems that pass with direct_solvers, iterative_solvers, equation-based solvers
-            @testset "Netwon-Raphson: $(file_name)" for file_name in [
+            @testset "Newton-Raphson: $(file_name)" for file_name in [
                     "data/lcp_CPS_2.dat",
                     "data/lcp_CPS_3.dat",
                     "data/lcp_ortiz.dat",
