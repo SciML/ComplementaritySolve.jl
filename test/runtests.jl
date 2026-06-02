@@ -1,7 +1,7 @@
 using SafeTestsets, Test
 
-const BACKEND_GROUP = uppercase(get(ENV, "BACKEND_GROUP", "All"))
-const TESTING_GROUP = uppercase(get(ENV, "TESTING_GROUP", "All"))
+const BACKEND_GROUP = uppercase(get(ENV, "BACKEND_GROUP", "CPU"))
+const TESTING_GROUP = uppercase(get(ENV, "TESTING_GROUP", get(ENV, "GROUP", "All")))
 
 macro testif(group, val, expr)
     return quote
