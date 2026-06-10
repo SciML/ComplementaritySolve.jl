@@ -25,6 +25,9 @@ end
             @safetestset "Mixed Complementarity Problems" begin
                 include("core/cpu/mcp.jl")
             end
+            @safetestset "ForwardDiff Seeding on GPU Arrays" begin
+                include("core/cpu/forwarddiff_seed.jl")
+            end
         end
 
         @testif BACKEND_GROUP "CUDA" begin
