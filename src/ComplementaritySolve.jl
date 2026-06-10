@@ -44,52 +44,19 @@ const AV = AbstractVector
 const AM = AbstractMatrix
 const AA3 = AbstractArray{T, 3} where {T}
 
+# KNOWN LIMITATION: with ForwardDiff >= 1, ForwardDiff-based jacobians (the
+# default AD for SimpleNewtonRaphson and friends) seed dual arrays with scalar
+# `setindex!` loops (via `structural_eachindex`), which errors on GPU arrays
+# with scalar indexing disallowed. ForwardDiff 0.10 used broadcast-based
+# seeding and worked on GPU arrays. Until this is fixed upstream in
+# ForwardDiff, solvers that compute jacobians via ForwardDiff (e.g.
+# NonlinearReformulation with the default nonlinear solver) error on CUDA
+# arrays when run with ForwardDiff >= 1.
 const DEFAULT_NLSOLVER = SimpleNewtonRaphson()
 
 ### ----- Type Piracy Starts ----- ###
 ArrayInterfaceCore.can_setindex(::Type{<:AbstractFill}) = false
 ArrayInterfaceCore.can_setindex(::Zygote.OneElement) = false
-
-# ForwardDiff 1.x seeds dual arrays with scalar `setindex!` loops (via
-# `structural_eachindex`), which errors on GPU arrays with scalar indexing
-# disallowed. ForwardDiff 0.10 used broadcast and worked on GPU arrays, so
-# restore broadcast-based seeding for them. TODO: upstream to ForwardDiff as a
-# GPUArraysCore extension.
-function ForwardDiff.seed!(
-        duals::GPUArraysCore.AbstractGPUArray{ForwardDiff.Dual{T, V, N}}, x,
-        seed::ForwardDiff.Partials{N, V} = zero(ForwardDiff.Partials{N, V})
-    ) where {T, V, N}
-    duals .= ForwardDiff.Dual{T, V, N}.(x, Ref(seed))
-    return duals
-end
-
-function ForwardDiff.seed!(
-        duals::GPUArraysCore.AbstractGPUArray{ForwardDiff.Dual{T, V, N}}, x,
-        seeds::NTuple{N, ForwardDiff.Partials{N, V}}
-    ) where {T, V, N}
-    dual_inds = 1:N
-    duals[dual_inds] .= ForwardDiff.Dual{T, V, N}.(view(x, dual_inds), seeds)
-    return duals
-end
-
-function ForwardDiff.seed!(
-        duals::GPUArraysCore.AbstractGPUArray{ForwardDiff.Dual{T, V, N}}, x, index,
-        seed::ForwardDiff.Partials{N, V} = zero(ForwardDiff.Partials{N, V})
-    ) where {T, V, N}
-    dual_inds = index:length(duals)
-    duals[dual_inds] .= ForwardDiff.Dual{T, V, N}.(view(x, dual_inds), Ref(seed))
-    return duals
-end
-
-function ForwardDiff.seed!(
-        duals::GPUArraysCore.AbstractGPUArray{ForwardDiff.Dual{T, V, N}}, x, index,
-        seeds::NTuple{N, ForwardDiff.Partials{N, V}}, chunksize = N
-    ) where {T, V, N}
-    offset = index - 1
-    dual_inds = (1 + offset):(offset + chunksize)
-    duals[dual_inds] .= ForwardDiff.Dual{T, V, N}.(view(x, dual_inds), seeds[1:chunksize])
-    return duals
-end
 
 ### ------ Type Piracy Ends ------ ###
 # NOTE: LinearSolve.defaultalg for AbstractSciMLOperator + AbstractGPUArray was upstreamed
