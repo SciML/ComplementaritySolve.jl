@@ -112,9 +112,9 @@ include("../../test_utils.jl")
                 q_ = randn(rng, Float32, szq...) |> cu
 
                 for loss_function in (sum, Base.Fix1(sum, abs2))
-                    # Broken by ForwardDiff >= 1 GPU dual seeding, see
-                    # https://github.com/SciML/ComplementaritySolve.jl/issues/65
-                    @test_broken begin
+                    if szq == (2, 1)
+                        # this combination takes the batched code path that does not
+                        # go through ForwardDiff jacobian seeding, so it works on CUDA
                         ∂M, ∂q = Zygote.gradient(M_, q_) do M, q
                             prob = LinearComplementarityProblem{false}(M, q)
                             sol = solve(prob)
@@ -128,22 +128,53 @@ include("../../test_utils.jl")
                             return loss_function(sol.u)
                         end
 
-                        (∂M !== nothing && size(∂M) == size(M_)) &&
-                            (∂q !== nothing && size(∂q) == size(q_)) &&
-                            isapprox(Array(∂M), ∂θ_fd.M; atol = 1.0e-2, rtol = 1.0e-2) &&
-                            isapprox(Array(∂q), ∂θ_fd.q; atol = 1.0e-2, rtol = 1.0e-2)
-                    end
+                        @test ∂M !== nothing && size(∂M) == size(M_)
+                        @test ∂q !== nothing && size(∂q) == size(q_)
+                        @test Array(∂M) ≈ ∂θ_fd.M atol = 1.0e-2 rtol = 1.0e-2
+                        @test Array(∂q) ≈ ∂θ_fd.q atol = 1.0e-2 rtol = 1.0e-2
 
-                    # We can't check for correctness with FwdDiff & FiniteDifferences
-                    # for inplace problems since the in-place batched solvers are not as
-                    # accurate as the non-inplace ones.
-                    @test_broken begin
-                        Zygote.gradient(M_, q_) do M, q
+                        # We can't check for correctness with FwdDiff & FiniteDifferences
+                        # for inplace problems since the in-place batched solvers are not
+                        # as accurate as the non-inplace ones.
+                        @test_nowarn Zygote.gradient(M_, q_) do M, q
                             prob = LinearComplementarityProblem{true}(M, q)
                             sol = solve(prob)
                             return loss_function(sol.u)
                         end
-                        true
+                    else
+                        # Broken by ForwardDiff >= 1 GPU dual seeding, see
+                        # https://github.com/SciML/ComplementaritySolve.jl/issues/65
+                        @test_broken begin
+                            ∂M, ∂q = Zygote.gradient(M_, q_) do M, q
+                                prob = LinearComplementarityProblem{false}(M, q)
+                                sol = solve(prob)
+                                return loss_function(sol.u)
+                            end
+
+                            θ = ComponentArray((; M = Array(M_), q = Array(q_)))
+                            ∂θ_fd = ForwardDiff.gradient(θ) do θ
+                                prob = LinearComplementarityProblem{false}(θ.M, θ.q)
+                                sol = solve(prob)
+                                return loss_function(sol.u)
+                            end
+
+                            (∂M !== nothing && size(∂M) == size(M_)) &&
+                                (∂q !== nothing && size(∂q) == size(q_)) &&
+                                isapprox(Array(∂M), ∂θ_fd.M; atol = 1.0e-2, rtol = 1.0e-2) &&
+                                isapprox(Array(∂q), ∂θ_fd.q; atol = 1.0e-2, rtol = 1.0e-2)
+                        end
+
+                        # We can't check for correctness with FwdDiff & FiniteDifferences
+                        # for inplace problems since the in-place batched solvers are not
+                        # as accurate as the non-inplace ones.
+                        @test_broken begin
+                            Zygote.gradient(M_, q_) do M, q
+                                prob = LinearComplementarityProblem{true}(M, q)
+                                sol = solve(prob)
+                                return loss_function(sol.u)
+                            end
+                            true
+                        end
                     end
                 end
             end
