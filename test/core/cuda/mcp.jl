@@ -35,9 +35,12 @@ rng = StableRNG(0)
                         NonlinearReformulation(:smooth),
                         NonlinearReformulation(:minmax),
                     )
-                    sol = solve(prob, solver; verbose = false)
-
-                    @test sol.u[1:2] ≈ θ atol = 1.0e-4 rtol = 1.0e-4
+                    # Broken by ForwardDiff >= 1 GPU dual seeding, see
+                    # https://github.com/SciML/ComplementaritySolve.jl/issues/65
+                    @test_broken begin
+                        sol = solve(prob, solver; verbose = false)
+                        isapprox(sol.u[1:2], θ; atol = 1.0e-4, rtol = 1.0e-4)
+                    end
                 end
             end
         end
@@ -59,10 +62,13 @@ rng = StableRNG(0)
             end
 
             θ = [2.0, -3.0] |> cu
-            ∂θ_zygote = only(Zygote.gradient(loss_function, θ))
-            ∂θ_forwarddiff = ForwardDiff.gradient(loss_function_cpu, Array(θ))
-
-            @test Array(∂θ_zygote) ≈ ∂θ_forwarddiff atol = 1.0e-6 rtol = 1.0e-6
+            # Broken by ForwardDiff >= 1 GPU dual seeding, see
+            # https://github.com/SciML/ComplementaritySolve.jl/issues/65
+            @test_broken begin
+                ∂θ_zygote = only(Zygote.gradient(loss_function, θ))
+                ∂θ_forwarddiff = ForwardDiff.gradient(loss_function_cpu, Array(θ))
+                isapprox(Array(∂θ_zygote), ∂θ_forwarddiff; atol = 1.0e-6, rtol = 1.0e-6)
+            end
         end
     end
 end
