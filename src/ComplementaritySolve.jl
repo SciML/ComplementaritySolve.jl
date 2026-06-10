@@ -44,14 +44,6 @@ const AV = AbstractVector
 const AM = AbstractMatrix
 const AA3 = AbstractArray{T, 3} where {T}
 
-# KNOWN LIMITATION: with ForwardDiff >= 1, ForwardDiff-based jacobians (the
-# default AD for SimpleNewtonRaphson and friends) seed dual arrays with scalar
-# `setindex!` loops (via `structural_eachindex`), which errors on GPU arrays
-# with scalar indexing disallowed. ForwardDiff 0.10 used broadcast-based
-# seeding and worked on GPU arrays. Until this is fixed upstream in
-# ForwardDiff, solvers that compute jacobians via ForwardDiff (e.g.
-# NonlinearReformulation with the default nonlinear solver) error on CUDA
-# arrays when run with ForwardDiff >= 1.
 const DEFAULT_NLSOLVER = SimpleNewtonRaphson()
 
 ### ----- Type Piracy Starts ----- ###

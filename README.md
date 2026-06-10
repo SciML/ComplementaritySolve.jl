@@ -42,11 +42,7 @@ All `LCP`s, `MLCP`s, and `NCP`s can be converted to `MCP`s, and these solvers ca
 | MixedComplementarityAdjoint  | MCP          |                    | :heavy_check_mark: | :heavy_check_mark: |         |
 
 [^1]: Solvers internally using `NonlinearSolve.jl` need to use a CUDA compatible solver
-(like `SimpleNewtonRaphson()`). Additionally, with ForwardDiff 1.x these solvers
-currently error on CUDA arrays: ForwardDiff >= 1 seeds dual arrays with scalar
-`setindex!` loops (ForwardDiff 0.10 used broadcast), which is disallowed on GPU
-arrays, so ForwardDiff-based jacobians (the default AD) fail until this is fixed
-upstream in ForwardDiff.
+(like `SimpleNewtonRaphson()`).
 
 ## Usage
 
