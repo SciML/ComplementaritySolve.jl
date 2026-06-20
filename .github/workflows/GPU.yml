@@ -43,3 +43,10 @@ jobs:
           files: lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
+          # The two matrix jobs (Core/Applications) share one self-hosted host
+          # and a single ~/.gitconfig. codecov-action's `git config --global
+          # --add safe.directory` setup then races on git's config lock,
+          # failing one job with "could not lock config file ...: File exists"
+          # even though tests pass. The workspace is already owned by the
+          # runner user, so this safe.directory write is unnecessary here.
+          disable_safe_directory: true
