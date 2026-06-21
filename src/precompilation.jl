@@ -35,9 +35,11 @@ using PrecompileTools: @setup_workload, @compile_workload
         # Also precompile minmax variant
         sol_nr_minmax = solve(prob, NonlinearReformulation(:minmax))
 
-        # Convert LCP to MCP and solve with PATH
-        # This is a common workflow
-        prob_mcp_from_lcp = MCP(prob)
-        sol_mcp_from_lcp = solve(prob_mcp_from_lcp, PATHSolverAlgorithm(); verbose = false)
+        # PATHSolverAlgorithm is intentionally not exercised here. Invoking the
+        # PATH native library (libpath50) inside the precompile worker
+        # segfaults intermittently, which aborts precompilation of the whole
+        # package. Native library calls are not what precompilation caches
+        # anyway, so excluding it loses nothing while making precompilation
+        # deterministic.
     end
 end
