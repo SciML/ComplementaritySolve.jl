@@ -16,10 +16,6 @@ run_qa(
     ei_kwargs = (;
         all_qualified_accesses_are_public = (;
             ignore = (
-                :Fix1, :Fix2,                          # Base (public in Julia 1.12+)
-                :Infeasible, :MaxIters, :MaxTime,      # SciMLBase.ReturnCode
-                :Success, :T, :Terminated,             # SciMLBase.ReturnCode
-                :NullParameters,                       # SciMLBase
                 :MCP_MajorIterationLimit, :MCP_MinorIterationLimit,  # PATHSolver
                 :MCP_NoProgress, :MCP_Solved, :MCP_TimeLimit, :solve_mcp,  # PATHSolver
                 :OneElement,                           # Zygote
@@ -31,7 +27,6 @@ run_qa(
             ignore = (
                 Symbol("@truncate_stacktrace"),        # TruncatedStacktraces
                 :AbstractFill,                         # FillArrays
-                :init, :solve, Symbol("solve!"),       # CommonSolve
             ),
         ),
     ),
