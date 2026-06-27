@@ -5,7 +5,6 @@ module ComplementaritySolve
 # Before release we will clean things up
 
 ## Core / QOL Dependencies
-using ArrayInterfaceCore: ArrayInterfaceCore
 using ChainRulesCore: ChainRulesCore, NoTangent, ZeroTangent
 using GPUArraysCore: GPUArraysCore
 using SciMLBase: SciMLBase, FunctionOperator, LinearProblem, NonlinearFunction,
@@ -46,11 +45,8 @@ const AA3 = AbstractArray{T, 3} where {T}
 
 const DEFAULT_NLSOLVER = SimpleNewtonRaphson()
 
-### ----- Type Piracy Starts ----- ###
-ArrayInterfaceCore.can_setindex(::Type{<:AbstractFill}) = false
-ArrayInterfaceCore.can_setindex(::Zygote.OneElement) = false
-
-### ------ Type Piracy Ends ------ ###
+# NOTE: `can_setindex` for FillArrays (`AbstractFill`/`OneElement`) lives upstream in
+# ArrayInterface (ArrayInterfaceFillArraysExt); see JuliaArrays/ArrayInterface.jl.
 # NOTE: LinearSolve.defaultalg for AbstractSciMLOperator + AbstractGPUArray was upstreamed
 
 abstract type AbstractComplementarityAlgorithm end

@@ -4,7 +4,6 @@ authors = ["Avik Pal <avikpal@mit.edu>"]
 version = "1.0.0"
 
 [deps]
-ArrayInterfaceCore = "30b0a656-2188-435a-8636-2ec0e6a096e2"
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 CommonSolve = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
 ConcreteStructs = "2569d6c7-a4a2-43d3-a901-331e8e4be471"
@@ -26,7 +25,6 @@ TruncatedStacktraces = "781d530d-4396-4725-bb49-402e4bee1e77"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
-ArrayInterfaceCore = "0.1"
 ChainRulesCore = "1"
 CommonSolve = "0.2.6"
 ConcreteStructs = "0.2"
