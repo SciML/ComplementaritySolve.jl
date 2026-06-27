@@ -45,9 +45,6 @@ const AA3 = AbstractArray{T, 3} where {T}
 
 const DEFAULT_NLSOLVER = SimpleNewtonRaphson()
 
-# NOTE: `can_setindex` for FillArrays (`AbstractFill`/`OneElement`) lives upstream in
-# ArrayInterface (ArrayInterfaceFillArraysExt); see JuliaArrays/ArrayInterface.jl.
-# NOTE: LinearSolve.defaultalg for AbstractSciMLOperator + AbstractGPUArray was upstreamed
 
 abstract type AbstractComplementarityAlgorithm end
 abstract type AbstractComplementaritySystemAlgorithm end
