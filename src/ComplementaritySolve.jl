@@ -33,7 +33,14 @@ using Polyester: Polyester, @batch
 import CommonSolve: init, solve, solve!
 import ChainRulesCore as CRC
 import FillArrays: AbstractFill
-import TruncatedStacktraces: @truncate_stacktrace
+
+# `@truncate_stacktrace` from the (archived) TruncatedStacktraces.jl is a complete
+# no-op on Julia >= 1.10 (its `DISABLE` constant is `true` for VERSION >= v"1.10",
+# so the macro expands to `nothing`). This package's compat floor is julia = "1.10",
+# so we reproduce that no-op locally and drop the dependency.
+macro truncate_stacktrace(::Symbol, short_display...)
+    return nothing
+end
 
 const ∂0 = ZeroTangent()
 const ∂∅ = NoTangent()
@@ -44,7 +51,6 @@ const AM = AbstractMatrix
 const AA3 = AbstractArray{T, 3} where {T}
 
 const DEFAULT_NLSOLVER = SimpleNewtonRaphson()
-
 
 abstract type AbstractComplementarityAlgorithm end
 abstract type AbstractComplementaritySystemAlgorithm end

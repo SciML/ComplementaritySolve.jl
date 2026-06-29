@@ -9,25 +9,18 @@ run_qa(
         project_extras = false,
         deps_compat = false,
     ),
-    # Intentional, documented type piracy on ArrayInterfaceCore.can_setindex for
-    # FillArrays.AbstractFill and Zygote.OneElement (src/ComplementaritySolve.jl).
-    # Tracked at https://github.com/SciML/ComplementaritySolve.jl/issues/68
-    aqua_broken = (:piracies,),
     ei_kwargs = (;
         all_qualified_accesses_are_public = (;
             ignore = (
-                :MCP_MajorIterationLimit, :MCP_MinorIterationLimit,  # PATHSolver
-                :MCP_NoProgress, :MCP_Solved, :MCP_TimeLimit, :solve_mcp,  # PATHSolver
-                :OneElement,                           # Zygote
-                :can_setindex,                         # ArrayInterfaceCore
-                :jacobian,                             # ForwardDiff
+                # PATHSolver C-API surface: no exports / no `public` declarations.
+                :MCP_MajorIterationLimit, :MCP_MinorIterationLimit,
+                :MCP_NoProgress, :MCP_Solved, :MCP_TimeLimit, :solve_mcp,
+                :jacobian,                             # ForwardDiff documented-but-not-`public` API
             ),
         ),
         all_explicit_imports_are_public = (;
-            ignore = (
-                Symbol("@truncate_stacktrace"),        # TruncatedStacktraces
-                :AbstractFill,                         # FillArrays
-            ),
+            # FillArrays.AbstractFill is documented but neither exported nor `public`.
+            ignore = (:AbstractFill,),
         ),
     ),
 )
