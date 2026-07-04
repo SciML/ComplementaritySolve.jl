@@ -4,7 +4,6 @@ end
 
 MixedComplementarityAdjoint() = MixedComplementarityAdjoint(nothing)
 
-@truncate_stacktrace MixedComplementarityAdjoint
 
 function __fixed_vecjac_operator(f, y, p, A₁, A₂)
     input, pb_f = Zygote.pullback(x -> f(x, p), y)

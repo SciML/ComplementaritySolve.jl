@@ -33,7 +33,6 @@ using Polyester: Polyester, @batch
 import CommonSolve: init, solve, solve!
 import ChainRulesCore as CRC
 import FillArrays: AbstractFill
-import TruncatedStacktraces: @truncate_stacktrace
 
 const ∂0 = ZeroTangent()
 const ∂∅ = NoTangent()
@@ -44,7 +43,6 @@ const AM = AbstractMatrix
 const AA3 = AbstractArray{T, 3} where {T}
 
 const DEFAULT_NLSOLVER = SimpleNewtonRaphson()
-
 
 abstract type AbstractComplementarityAlgorithm end
 abstract type AbstractComplementaritySystemAlgorithm end

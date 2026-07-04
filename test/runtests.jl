@@ -55,11 +55,8 @@ end
 
     @testif TESTING_GROUP "QA" begin
         @testif BACKEND_GROUP "CPU" begin
-            @safetestset "Aqua Quality Assurance" begin
-                include("aqua.jl")
-            end
-            @safetestset "Explicit Imports" begin
-                include("explicit_imports.jl")
+            @safetestset "Quality Assurance" begin
+                include("qa.jl")
             end
         end
     end

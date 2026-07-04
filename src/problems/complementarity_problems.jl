@@ -72,7 +72,6 @@ for iip in (true, false)
     end
 end
 
-@truncate_stacktrace LinearComplementarityProblem 1 2
 
 const LCP = LinearComplementarityProblem
 
@@ -105,7 +104,6 @@ end
     ub
 end
 
-@truncate_stacktrace MixedLinearComplementarityProblem
 
 const MLCP = MixedLinearComplementarityProblem
 
@@ -123,7 +121,6 @@ end
     p
 end
 
-@truncate_stacktrace NonlinearComplementarityProblem 1
 
 const NCP = NonlinearComplementarityProblem
 
@@ -141,7 +138,6 @@ end
     p
 end
 
-@truncate_stacktrace MixedComplementarityProblem 1
 
 const MCP = MixedComplementarityProblem
 
