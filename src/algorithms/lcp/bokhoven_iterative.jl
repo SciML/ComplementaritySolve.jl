@@ -5,7 +5,6 @@ end
 
 BokhovenIterativeAlgorithm() = BokhovenIterativeAlgorithm(DEFAULT_NLSOLVER)
 
-@truncate_stacktrace BokhovenIterativeAlgorithm
 
 ## NOTE: It is a steady state problem so we could in-principle use an ODE Solver
 for batched in (true, false)

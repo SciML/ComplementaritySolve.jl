@@ -7,7 +7,6 @@ function InteriorPointMethod(linsolve = nothing; tolerance = 1.0f-5)
     return InteriorPointMethod(linsolve, tolerance)
 end
 
-@truncate_stacktrace InteriorPointMethod
 
 function __feasible_steplength(x, Δx, cache; dims = :)
     T = eltype(x)

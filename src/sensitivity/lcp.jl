@@ -4,7 +4,6 @@ end
 
 LinearComplementarityAdjoint() = LinearComplementarityAdjoint(nothing)
 
-@truncate_stacktrace LinearComplementarityAdjoint
 
 __lcp_dims(u::AV, M) = (length(u), -1), length(u)^2
 __lcp_dims(u::AM, M) = size(u), prod(size(M)[1:2])
