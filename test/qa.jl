@@ -9,6 +9,32 @@ run_qa(
         project_extras = false,
         deps_compat = false,
     ),
+    api_docs_kwargs = (;
+        ignore = (
+            :BokhovenIterativeAlgorithm,
+            :InteriorPointMethod,
+            :LCP,
+            :LCS,
+            :LinearComplementarityAdjoint,
+            :LinearComplementarityProblem,
+            :LinearComplementaritySolution,
+            :MCP,
+            :MLCP,
+            :MixedComplementarityAdjoint,
+            :MixedComplementarityProblem,
+            :MixedComplementaritySolution,
+            :MixedLinearComplementarityProblem,
+            :NCP,
+            :NaiveLCSAlgorithm,
+            :NonlinearComplementarityProblem,
+            :NonlinearReformulation,
+            :PATHSolverAlgorithm,
+            :PGS,
+            :PSOR,
+            :RPGS,
+            :RPSOR,
+        ),
+    ),
     ei_kwargs = (;
         all_qualified_accesses_are_public = (;
             ignore = (
