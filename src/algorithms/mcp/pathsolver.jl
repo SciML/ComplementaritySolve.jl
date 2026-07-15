@@ -1,3 +1,17 @@
+"""
+    PATHSolverAlgorithm()
+
+Algorithm wrapper for solving mixed complementarity problems with PATHSolver.jl.
+
+The PATH backend only supports `Float64` inputs. Non-`Float64` `u0`, bounds, and
+parameters are converted before calling `PATHSolver.solve_mcp`.
+
+# Keywords Passed To `solve`
+
+- `verbose::Bool = true`: Emit a warning when inputs are converted to `Float64` and
+    pass the inverse value to PATHSolver's `silent` option.
+- `kwargs...`: Additional keyword arguments forwarded to `PATHSolver.solve_mcp`.
+"""
 struct PATHSolverAlgorithm <: AbstractComplementarityAlgorithm end
 
 # TODO: We might want to exploit sparsity using Symbolics.jl. Else PATH Solver won't be

@@ -44,8 +44,57 @@ const AA3 = AbstractArray{T, 3} where {T}
 
 const DEFAULT_NLSOLVER = SimpleNewtonRaphson()
 
+"""
+    AbstractComplementarityAlgorithm
+
+Developer interface for complementarity problem algorithms.
+
+Algorithm types should subtype `AbstractComplementarityAlgorithm` when they are
+intended to be passed as the second argument to `solve(prob, alg; kwargs...)` for
+`AbstractComplementarityProblem`s.
+
+# Interface
+
+- Implement an internal `__solve(prob, alg, args...; kwargs...)` method for each
+    supported problem family.
+- Return an `AbstractComplementaritySolution` subtype whose `prob` and `alg` fields
+    reference the original problem and algorithm.
+- Accept solver keywords through `kwargs...` when the wrapped numerical method
+    supports them.
+
+This is a developer extension point. User code should prefer the concrete algorithm
+constructors exported by ComplementaritySolve.
+"""
 abstract type AbstractComplementarityAlgorithm end
+
+"""
+    AbstractComplementaritySystemAlgorithm
+
+Developer interface for algorithms that solve complementarity systems.
+
+# Interface
+
+- Implement `solve(prob::AbstractComplementaritySystem, alg; kwargs...)`.
+- Return the solution object produced by the wrapped ODE or steady-state solve.
+- Forward relevant solver keywords to the continuous dynamics solve and the embedded
+    complementarity solve.
+"""
 abstract type AbstractComplementaritySystemAlgorithm end
+
+"""
+    AbstractComplementaritySensitivityAlgorithm
+
+Developer interface for adjoint rules for complementarity solves.
+
+# Interface
+
+- Implement `__solve_adjoint(prob, sensealg, sol, ∂sol, args...; kwargs...)`.
+- Return parameter/data tangents compatible with the corresponding `solve` call.
+- Use only the public problem fields documented by the concrete problem type.
+
+This interface is used by the ChainRulesCore rule for differentiating through
+`solve(prob, alg; sensealg)`.
+"""
 abstract type AbstractComplementaritySensitivityAlgorithm end
 
 include("utils.jl")

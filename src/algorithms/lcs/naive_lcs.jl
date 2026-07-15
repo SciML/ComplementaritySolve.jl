@@ -1,3 +1,26 @@
+"""
+    NaiveLCSAlgorithm(ode_solver, lcp_solver)
+
+Solve a [`LinearComplementaritySystem`](@ref) by solving an LCP inside each ODE
+right-hand-side evaluation.
+
+# Arguments
+
+- `ode_solver`: OrdinaryDiffEq/SciML ODE solver used for the state dynamics, or a
+    steady-state solver when the system has an infinite final time.
+- `lcp_solver`: Complementarity algorithm used for each embedded LCP.
+
+# Fields
+
+- `ode_solver`: Solver for the continuous state dynamics.
+- `lcp_solver`: Solver for the complementarity subproblem.
+
+# Keywords Passed To `solve`
+
+- `ode_kwargs`: Named tuple forwarded to the ODE or steady-state solve.
+- `lcp_kwargs`: Named tuple forwarded to each embedded LCP solve.
+- `kwargs...`: Additional keywords forwarded to both solve calls where applicable.
+"""
 @concrete struct NaiveLCSAlgorithm <: AbstractComplementaritySystemAlgorithm
     ode_solver
     lcp_solver

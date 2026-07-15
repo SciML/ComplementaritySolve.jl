@@ -5,14 +5,56 @@ function __error_estimate(::LinearComplementarityProblem, z, w)
 end
 
 # Regularized Projected Successive Overrelaxation (RPSOR) schemes for solving LCPs
+"""
+    RPSOR(; ω = 1.0, ρ = 0.0, tol = 1.0e-6)
+
+Regularized projected successive overrelaxation algorithm for non-batched linear
+complementarity problems.
+
+# Keywords
+
+- `ω`: Overrelaxation parameter.
+- `ρ`: Regularization parameter.
+- `tol`: Error tolerance used by the LCP residual estimate.
+
+# Fields
+
+- `ω`: Overrelaxation parameter.
+- `ρ`: Regularization parameter.
+- `tol`: Termination tolerance.
+"""
 Base.@kwdef struct RPSOR{sT} <: AbstractComplementarityAlgorithm
     ω::sT = 1.0
     ρ::sT = 0.0
     tol::sT = 1.0e-6
 end
 
+"""
+    PSOR(ω = 1.0; kwargs...)
+
+Construct a projected successive overrelaxation algorithm as `RPSOR(; ω, ρ = 0)`.
+
+Additional keyword arguments are forwarded to [`RPSOR`](@ref).
+"""
 PSOR(ω = 1.0; kwargs...) = RPSOR(; ω, kwargs...)
+
+"""
+    PGS(; kwargs...)
+
+Construct a projected Gauss-Seidel algorithm as `RPSOR(; ω = 1, ρ = 0)`.
+
+Additional keyword arguments are forwarded to [`RPSOR`](@ref).
+"""
 PGS(; kwargs...) = RPSOR(; ω = 1.0, kwargs...)
+
+"""
+    RPGS(ρ = 0.0; kwargs...)
+
+Construct a regularized projected Gauss-Seidel algorithm as
+`RPSOR(; ω = 1, ρ)`.
+
+Additional keyword arguments are forwarded to [`RPSOR`](@ref).
+"""
 RPGS(ρ = 0.0; kwargs...) = RPSOR(; ω = 1.0, ρ, kwargs...)
 
 # RPSOR Algorithm as described in Section 12.4.6 (Acary, Brogliato 2008)
