@@ -2,6 +2,7 @@ using SciMLTesting, ComplementaritySolve, Test
 
 run_qa(
     ComplementaritySolve;
+    api_docs_kwargs = (; rendered = true),
     explicit_imports = true,
     aqua_kwargs = (;
         ambiguities = false,    # Too many ambiguities from downstream
