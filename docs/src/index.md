@@ -24,5 +24,4 @@ LinearComplementarityAdjoint
 MixedComplementarityAdjoint
 LinearComplementaritySolution
 MixedComplementaritySolution
-solve
 ```

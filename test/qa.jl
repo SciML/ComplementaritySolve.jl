@@ -2,8 +2,8 @@ using SciMLTesting, ComplementaritySolve, Test
 
 run_qa(
     ComplementaritySolve;
-    api_docs_kwargs = (; rendered = true),
-    explicit_imports = true,
+    api_docs_kwargs = (; rendered_ignore = (:solve,)),
+    reexports_allow = (:solve,),
     aqua_kwargs = (;
         ambiguities = false,    # Too many ambiguities from downstream
         persistent_tasks = false,  # PATHSolver precompile workload triggers persistent task detection
