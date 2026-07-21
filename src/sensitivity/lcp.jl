@@ -1,3 +1,20 @@
+"""
+    LinearComplementarityAdjoint(linsolve = nothing)
+
+Adjoint sensitivity algorithm for linear complementarity problems.
+
+The adjoint computes sensitivities with respect to the LCP data by solving a linear
+system derived from the smoothed complementarity residual.
+
+# Arguments
+
+- `linsolve`: Optional LinearSolve.jl algorithm for the adjoint linear system. If
+    `nothing`, a direct backslash solve is used.
+
+# Fields
+
+- `linsolve`: Linear solver algorithm or `nothing`.
+"""
 @concrete struct LinearComplementarityAdjoint <: AbstractComplementaritySensitivityAlgorithm
     linsolve
 end

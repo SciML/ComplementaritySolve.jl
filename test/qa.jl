@@ -2,38 +2,13 @@ using SciMLTesting, ComplementaritySolve, Test
 
 run_qa(
     ComplementaritySolve;
-    explicit_imports = true,
+    api_docs_kwargs = (; rendered_ignore = (:solve,)),
+    reexports_allow = (:solve,),
     aqua_kwargs = (;
         ambiguities = false,    # Too many ambiguities from downstream
         persistent_tasks = false,  # PATHSolver precompile workload triggers persistent task detection
         project_extras = false,
         deps_compat = false,
-    ),
-    api_docs_kwargs = (;
-        ignore = (
-            :BokhovenIterativeAlgorithm,
-            :InteriorPointMethod,
-            :LCP,
-            :LCS,
-            :LinearComplementarityAdjoint,
-            :LinearComplementarityProblem,
-            :LinearComplementaritySolution,
-            :MCP,
-            :MLCP,
-            :MixedComplementarityAdjoint,
-            :MixedComplementarityProblem,
-            :MixedComplementaritySolution,
-            :MixedLinearComplementarityProblem,
-            :NCP,
-            :NaiveLCSAlgorithm,
-            :NonlinearComplementarityProblem,
-            :NonlinearReformulation,
-            :PATHSolverAlgorithm,
-            :PGS,
-            :PSOR,
-            :RPGS,
-            :RPSOR,
-        ),
     ),
     ei_kwargs = (;
         all_qualified_accesses_are_public = (;

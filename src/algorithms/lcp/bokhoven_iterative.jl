@@ -1,4 +1,22 @@
 ## Works only if M is positive definite and symmetric
+"""
+    BokhovenIterativeAlgorithm(nlsolver = DEFAULT_NLSOLVER)
+
+Iterative LCP algorithm based on the Bokhoven transformation.
+
+This algorithm is intended for linear complementarity problems whose matrix `M` is
+positive definite and symmetric. It transforms the LCP to a nonlinear fixed-point
+problem and solves that problem with `nlsolver`.
+
+# Arguments
+
+- `nlsolver`: NonlinearSolve.jl-compatible algorithm used for the transformed
+    nonlinear problem.
+
+# Fields
+
+- `nlsolver`: Nonlinear solver algorithm.
+"""
 @concrete struct BokhovenIterativeAlgorithm <: AbstractComplementarityAlgorithm
     nlsolver
 end

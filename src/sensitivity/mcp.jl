@@ -1,3 +1,21 @@
+"""
+    MixedComplementarityAdjoint(linsolve = nothing)
+
+Adjoint sensitivity algorithm for mixed complementarity problems.
+
+The adjoint differentiates through the mixed complementarity residual and solves the
+resulting linear system with either a supplied LinearSolve.jl algorithm or a direct
+backslash solve.
+
+# Arguments
+
+- `linsolve`: Optional LinearSolve.jl algorithm for the adjoint linear system. If
+    `nothing`, a direct backslash solve is used.
+
+# Fields
+
+- `linsolve`: Linear solver algorithm or `nothing`.
+"""
 @concrete struct MixedComplementarityAdjoint <: AbstractComplementaritySensitivityAlgorithm
     linsolve
 end

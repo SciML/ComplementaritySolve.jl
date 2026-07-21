@@ -1,3 +1,25 @@
+"""
+    InteriorPointMethod(linsolve = nothing; tolerance = 1.0f-5)
+
+Interior-point algorithm for linear complementarity problems.
+
+The method iterates on primal variables and complementarity slack variables. Linear
+systems are solved with LinearSolve.jl when `linsolve` is supplied, otherwise the
+default backslash solve is used.
+
+# Arguments
+
+- `linsolve`: Optional LinearSolve.jl algorithm for the Newton systems.
+
+# Keywords
+
+- `tolerance`: Termination tolerance for complementarity and feasibility residuals.
+
+# Fields
+
+- `linsolve`: Linear solver algorithm or `nothing`.
+- `η`: Stored tolerance.
+"""
 @concrete struct InteriorPointMethod <: AbstractComplementarityAlgorithm
     linsolve
     η
