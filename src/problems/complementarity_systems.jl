@@ -17,17 +17,17 @@ the concrete problem fields documented by the system type.
 """
 abstract type AbstractComplementaritySystem{iip} end
 
-@doc doc"""
+"""
     LinearComplementaritySystem(x0, controller, λ0, tspan, p, A, B, D, a, E, F, c)
     LCS(x0, controller, tspan, p, A, B, D, a, E, F, c)
 
 LinearComplementaritySystem describes the following system:
 
 ```math
-\begin{align}
-    \dot{x} &= A x + B controller(x, \lambda, p) + D \lambda + a \\
-    0 &\leq \lambda \perp E x + F \lambda + c \geq 0
-\end{align}
+\\begin{align}
+    \\dot{x} &= A x + B controller(x, \\lambda, p) + D \\lambda + a \\\\
+    0 &\\leq \\lambda \\perp E x + F \\lambda + c \\geq 0
+\\end{align}
 ```
 
 `p` are parameters to the controller `controller`.

@@ -14,7 +14,6 @@ using CommonSolve: CommonSolve
 using ConcreteStructs: ConcreteStructs, @concrete
 ## Stdlibs
 using LinearAlgebra: LinearAlgebra, Diagonal, I, diagind, mul!, norm, pinv, \, /
-using Markdown: Markdown, @doc_str
 using SparseArrays: SparseArrays
 ## SciML Dependencies
 using LinearSolve: LinearSolve
