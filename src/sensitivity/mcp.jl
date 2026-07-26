@@ -56,12 +56,12 @@ end
     A₂ = ∂ϕ₊∂v₊ * ∂ϕ₋∂u₋ + ∂ϕ₋∂v₋
     if isinplace(prob)
         # Using ForwardDiff for now. We can potentially use Enzyme.jl here
-        J = ForwardDiff.jacobian((y, u) -> f(y, u, p), fᵤ, u)
+        J = jacobian((y, u) -> f(y, u, p), fᵤ, AutoForwardDiff(), u)
         A = J' * A₁ .+ A₂
     else
         if length(u) ≤ 50
             # Construct the Full Matrix
-            A = only(Zygote.jacobian(Base.Fix2(f, p), u))' * A₁ .+ A₂
+            A = jacobian(Base.Fix2(f, p), AutoZygote(), u)' * A₁ .+ A₂
         else
             # Use Matrix Free Methods
             ## NOTE: If we use SparseDiffTools here we will have to mess around with a wrapper
@@ -79,7 +79,7 @@ end
 
     if isinplace(prob)
         # Using ForwardDiff for now. We can potentially use Enzyme.jl here
-        J = ForwardDiff.jacobian((y, p) -> f(y, u, p), fᵤ, p)
+        J = jacobian((y, p) -> f(y, u, p), fᵤ, AutoForwardDiff(), p)
         ∂p = -reshape((A₁ * λ)' * J, size(p))
     else
         _, pb_f = Zygote.pullback(Base.Fix1(f, u), p)

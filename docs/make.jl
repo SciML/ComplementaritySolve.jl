@@ -3,7 +3,7 @@ using Documenter
 
 makedocs(;
     modules = [ComplementaritySolve],
-    checkdocs = :exports,
+    checkdocs = :public,
     sitename = "ComplementaritySolve.jl",
     format = Documenter.HTML(;
         prettyurls = get(ENV, "CI", "false") == "true",
@@ -12,6 +12,7 @@ makedocs(;
     ),
     pages = [
         "Home" => "index.md",
+        "Developer API" => "developer_api.md",
     ],
 )
 

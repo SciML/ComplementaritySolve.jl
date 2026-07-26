@@ -2,6 +2,7 @@ using ChainRulesCore, ComplementaritySolve, ComponentArrays, DiffEqBase, Forward
     LinearAlgebra, Optimization, OptimizationOptimisers, OrdinaryDiffEq, SciMLSensitivity,
     SimpleNonlinearSolve, SparseArrays, StableRNGs, Statistics, SteadyStateDiffEq, Test
 using Zygote
+using CommonSolve: solve
 
 const m₁ = 0.5f0
 const m₂ = 1.0f0

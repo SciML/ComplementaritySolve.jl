@@ -35,7 +35,7 @@ __notangent(::ZeroTangent) = true
 __notangent(::NoTangent) = true
 __notangent(::Any) = false
 
-__unfillarray(x::AbstractFill) = collect(x)
+__unfillarray(x::AbstractArray) = ismutable(x) ? x : collect(x)
 __unfillarray(x) = x
 
 function batched_matvec(A::AA3, x::AM)

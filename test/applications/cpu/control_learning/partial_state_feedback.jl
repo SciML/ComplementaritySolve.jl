@@ -2,6 +2,7 @@ using Zygote, LinearAlgebra, SimpleNonlinearSolve, OrdinaryDiffEq, Optimization,
     OptimizationOptimisers, SciMLSensitivity, Test, ComponentArrays, SparseArrays,
     StableRNGs
 using ComplementaritySolve
+using CommonSolve: solve
 
 # parameters
 const m1 = 1.0;

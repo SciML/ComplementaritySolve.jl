@@ -4,8 +4,9 @@
 Developer interface for complementarity system containers.
 
 Complementarity systems couple continuous dynamics with complementarity variables.
-Generic system algorithms are expected to call `solve(prob, alg; kwargs...)` and use
-the concrete problem fields documented by the system type.
+External system algorithms implement the qualified developer hook
+`ComplementaritySolve.__solve(prob, alg; kwargs...)`; users invoke the generic
+`solve(prob, alg; kwargs...)` entry point.
 
 # Interface
 
@@ -14,6 +15,9 @@ the concrete problem fields documented by the system type.
 - `prob.tspan` must contain the integration interval.
 - `prob.p` must contain parameters passed to the controller.
 - `prob.controller` must be callable as `controller(x, λ, p, t)`.
+- A subtype and an `AbstractComplementaritySystemAlgorithm` subtype must have a
+  matching `__solve` method. That method must return the solution object produced by
+  the underlying continuous solver.
 """
 abstract type AbstractComplementaritySystem{iip} end
 

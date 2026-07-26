@@ -19,7 +19,7 @@ nonlinear residual and delegating to a NonlinearSolve.jl-compatible solver.
 using ComplementaritySolve
 
 prob = LinearComplementarityProblem([2.0 -1.0; -1.0 2.0], [-1.0, -1.0])
-sol = solve(prob, NonlinearReformulation(:smooth))
+sol = ComplementaritySolve.solve(prob, NonlinearReformulation(:smooth))
 ```
 """
 @concrete struct NonlinearReformulation{method} <: AbstractComplementarityAlgorithm
