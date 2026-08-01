@@ -7,7 +7,7 @@ module ComplementaritySolve
 ## Core / QOL Dependencies
 using ChainRulesCore: ChainRulesCore, NoTangent, ZeroTangent
 using GPUArraysCore: GPUArraysCore
-using SciMLBase: SciMLBase, FunctionOperator, LinearProblem, NonlinearFunction,
+using SciMLBase: SciMLBase, LinearProblem, NonlinearFunction,
     NonlinearProblem, ODEFunction, ODEProblem, ReturnCode,
     SteadyStateProblem, isinplace
 using SciMLPublic: @public
@@ -20,7 +20,7 @@ using LinearAlgebra: LinearAlgebra, Diagonal, I, diagind, mul!, norm, pinv, \, /
 using SparseArrays: SparseArrays
 ## SciML Dependencies
 using LinearSolve: LinearSolve
-## SciMLOperators is used transitively via SciMLBase (FunctionOperator)
+using SciMLOperators: FunctionOperator
 using SimpleNonlinearSolve: SimpleNonlinearSolve, SimpleNewtonRaphson
 using NonlinearSolve: NonlinearSolve
 ## AD Packages (for sensitivities & PATHSolver; move to extensions)
