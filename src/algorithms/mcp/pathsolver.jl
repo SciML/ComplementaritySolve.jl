@@ -46,9 +46,10 @@ function __solve(
 
     function J!(n, nnz, z, col, len, row, data)
         if !iip
-            J = (n ≤ 100 ? ForwardDiff.jacobian : Zygote.jacobian)(fₚ, z)
+            backend = n ≤ 100 ? AutoForwardDiff() : AutoZygote()
+            J = jacobian(fₚ, backend, z)
         else
-            J = ForwardDiff.jacobian(fₚ, similar(z, n), z)
+            J = jacobian(fₚ, similar(z, n), AutoForwardDiff(), z)
         end
         i = 1
         for c in 1:n

@@ -7,17 +7,20 @@ module ComplementaritySolve
 ## Core / QOL Dependencies
 using ChainRulesCore: ChainRulesCore, NoTangent, ZeroTangent
 using GPUArraysCore: GPUArraysCore
-using SciMLBase: SciMLBase, FunctionOperator, LinearProblem, NonlinearFunction,
+using SciMLBase: SciMLBase, LinearProblem, NonlinearFunction,
     NonlinearProblem, ODEFunction, ODEProblem, ReturnCode,
     SteadyStateProblem, isinplace
+using SciMLPublic: @public
 using CommonSolve: CommonSolve
 using ConcreteStructs: ConcreteStructs, @concrete
+using DifferentiationInterface: DifferentiationInterface, AutoForwardDiff, AutoZygote,
+    jacobian
 ## Stdlibs
 using LinearAlgebra: LinearAlgebra, Diagonal, I, diagind, mul!, norm, pinv, \, /
 using SparseArrays: SparseArrays
 ## SciML Dependencies
 using LinearSolve: LinearSolve
-## SciMLOperators is used transitively via SciMLBase (FunctionOperator)
+using SciMLOperators: FunctionOperator
 using SimpleNonlinearSolve: SimpleNonlinearSolve, SimpleNewtonRaphson
 using NonlinearSolve: NonlinearSolve
 ## AD Packages (for sensitivities & PATHSolver; move to extensions)
@@ -31,7 +34,6 @@ using Polyester: Polyester, @batch
 
 import CommonSolve: init, solve, solve!
 import ChainRulesCore as CRC
-import FillArrays: AbstractFill
 
 const ∂0 = ZeroTangent()
 const ∂∅ = NoTangent()
@@ -54,7 +56,7 @@ intended to be passed as the second argument to `solve(prob, alg; kwargs...)` fo
 
 # Interface
 
-- Implement an internal `__solve(prob, alg, args...; kwargs...)` method for each
+- Implement `ComplementaritySolve.__solve(prob, alg, args...; kwargs...)` for each
     supported problem family.
 - Return an `AbstractComplementaritySolution` subtype whose `prob` and `alg` fields
     reference the original problem and algorithm.
@@ -73,7 +75,7 @@ Developer interface for algorithms that solve complementarity systems.
 
 # Interface
 
-- Implement `solve(prob::AbstractComplementaritySystem, alg; kwargs...)`.
+- Implement `ComplementaritySolve.__solve(prob, alg; kwargs...)`.
 - Return the solution object produced by the wrapped ODE or steady-state solve.
 - Forward relevant solver keywords to the continuous dynamics solve and the embedded
     complementarity solve.
@@ -127,7 +129,13 @@ export PATHSolverAlgorithm
 export NaiveLCSAlgorithm
 export LinearComplementarityAdjoint, MixedComplementarityAdjoint
 export LinearComplementaritySolution, MixedComplementaritySolution
-export solve
+
+@public AbstractComplementarityAlgorithm, AbstractComplementaritySystemAlgorithm
+@public AbstractComplementaritySensitivityAlgorithm
+@public AbstractComplementarityProblem, AbstractLinearComplementarityProblem
+@public AbstractNonlinearComplementarityProblem, AbstractComplementaritySystem
+@public AbstractComplementaritySolution, AbstractLinearComplementaritySolution
+@public isbatched, __solve, __solve_adjoint
 
 include("precompilation.jl")
 

@@ -1,4 +1,5 @@
 using ComplementaritySolve, ComponentArrays, FiniteDifferences, ForwardDiff
+using CommonSolve: solve
 using NonlinearSolve: Broyden
 using SimpleNonlinearSolve, StableRNGs, Test, Zygote
 

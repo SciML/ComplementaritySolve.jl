@@ -1,4 +1,5 @@
 using BenchmarkTools, ComplementaritySolve, ComponentArrays, FiniteDifferences
+using CommonSolve: solve
 using ForwardDiff, NonlinearSolve, SimpleNonlinearSolve, StableRNGs, Test, Zygote
 
 rng = StableRNG(0)

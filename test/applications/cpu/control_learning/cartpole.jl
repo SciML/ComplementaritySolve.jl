@@ -2,6 +2,7 @@ using Zygote, LinearAlgebra, SimpleNonlinearSolve, OrdinaryDiffEq, Optimization,
     OptimizationOptimisers, SciMLSensitivity, SteadyStateDiffEq, Test, ComponentArrays,
     StableRNGs
 using ComplementaritySolve
+using CommonSolve: solve
 
 const g = 9.81;
 const mp = 0.1;

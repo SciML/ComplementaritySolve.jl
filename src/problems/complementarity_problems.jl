@@ -61,6 +61,28 @@ abstract type AbstractNonlinearComplementarityProblem{iip} <:
 AbstractComplementarityProblem{iip} end
 
 SciMLBase.isinplace(::AbstractComplementarityProblem{iip}) where {iip} = iip
+
+"""
+    isbatched(prob::AbstractLinearComplementarityProblem) -> Bool
+
+Return whether `prob` stores independent linear complementarity problems in a batch.
+
+# Arguments
+
+- `prob`: A linear complementarity problem subtype.
+
+# Returns
+
+- `true` when `M` has a batch dimension and the corresponding `q` and `u0` values
+  represent independent column-wise problems; otherwise `false`.
+
+# Interface
+
+The return value is determined by the second type parameter of
+`AbstractLinearComplementarityProblem{iip, batched}`. Subtypes must use `true` only
+when their documented storage satisfies the batched matrix/vector layout expected by
+algorithms in this package.
+"""
 isbatched(::AbstractLinearComplementarityProblem{I, B}) where {I, B} = B
 
 """
@@ -97,7 +119,7 @@ using ComplementaritySolve
 M = [2.0 -1.0; -1.0 2.0]
 q = [-1.0, -1.0]
 prob = LinearComplementarityProblem(M, q)
-sol = solve(prob, PGS())
+sol = ComplementaritySolve.solve(prob, PGS())
 ```
 """
 @concrete struct LinearComplementarityProblem{iip, batched} <:

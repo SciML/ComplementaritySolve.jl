@@ -1,0 +1,20 @@
+# Developer API
+
+The qualified APIs on this page are intended for packages implementing
+ComplementaritySolve-compatible problem containers, algorithms, or sensitivity rules.
+Application code should use the exported problem constructors and algorithms instead.
+
+```@docs
+ComplementaritySolve.AbstractComplementarityProblem
+ComplementaritySolve.AbstractLinearComplementarityProblem
+ComplementaritySolve.AbstractNonlinearComplementarityProblem
+ComplementaritySolve.AbstractComplementaritySystem
+ComplementaritySolve.AbstractComplementarityAlgorithm
+ComplementaritySolve.AbstractComplementaritySystemAlgorithm
+ComplementaritySolve.AbstractComplementaritySensitivityAlgorithm
+ComplementaritySolve.AbstractComplementaritySolution
+ComplementaritySolve.AbstractLinearComplementaritySolution
+ComplementaritySolve.isbatched
+ComplementaritySolve.__solve
+ComplementaritySolve.__solve_adjoint
+```

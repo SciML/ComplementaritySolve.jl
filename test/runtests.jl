@@ -19,6 +19,9 @@ end
 @testset "Complementarity Solve" begin
     @testif TESTING_GROUP "Core" begin
         @testif BACKEND_GROUP "CPU" begin
+            @safetestset "Generic developer interfaces" begin
+                include("interfaces.jl")
+            end
             @safetestset "Linear Complementarity Problems" begin
                 include("core/cpu/lcp.jl")
             end

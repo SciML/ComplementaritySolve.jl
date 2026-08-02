@@ -1,4 +1,5 @@
 using ComplementaritySolve, ComponentArrays, FiniteDifferences, ForwardDiff
+using CommonSolve: solve
 using SimpleNonlinearSolve, StableRNGs, Test, Zygote
 
 using CUDA

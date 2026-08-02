@@ -26,7 +26,7 @@ right-hand-side evaluation.
     lcp_solver
 end
 
-function solve(
+function __solve(
         prob::LinearComplementaritySystem{sstate}, alg::NaiveLCSAlgorithm;
         ode_kwargs = (;), lcp_kwargs = (;), kwargs...
     ) where {sstate}
