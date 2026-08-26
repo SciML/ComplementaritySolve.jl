@@ -9,7 +9,7 @@ run_qa(
     ComplementaritySolve;
     # Aqua's isolated precompile probe intermittently exits before writing `done.log`
     # (SciMLBaseDifferentiationInterfaceExt "missing from the cache" race on Julia
-    # >= 1.11). Not a real persistent-task leak; see SciMLTesting#76 diagnostics.
+    # >= 1.11). Not a real persistent-task leak; see ComplementaritySolve#76 diagnostics.
     aqua_kwargs = (; persistent_tasks = false),
     ei_kwargs = (;
         all_qualified_accesses_are_public = (;
