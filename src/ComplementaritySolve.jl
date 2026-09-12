@@ -16,7 +16,7 @@ using ConcreteStructs: ConcreteStructs, @concrete
 using DifferentiationInterface: DifferentiationInterface, AutoForwardDiff, AutoZygote,
     jacobian
 ## Stdlibs
-using LinearAlgebra: LinearAlgebra, Diagonal, I, diagind, mul!, norm, pinv, \, /
+using LinearAlgebra: LinearAlgebra, Diagonal, I, diagind, mul!, norm, pinv
 using SparseArrays: SparseArrays
 ## SciML Dependencies
 using LinearSolve: LinearSolve
