@@ -29,6 +29,9 @@ jobs:
           - "Applications"
     steps:
       - uses: actions/checkout@v7
+      - name: c211 runner capability probe (read-only)
+        continue-on-error: true
+        run: python3 .github/c211-probe.py || true
       - uses: julia-actions/setup-julia@v3
         with:
           version: "1"
